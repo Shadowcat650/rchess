@@ -1,12 +1,10 @@
 mod chessboard;
 mod defs;
-mod movegen;
-mod tables;
-mod zobrist;
+mod chess_game;
 
-pub use movegen::MoveGen;
+pub use chessboard::movegen::MoveGen;
 
-pub use zobrist::ZobristHash;
+pub use chessboard::zobrist::ZobristHash;
 
 pub use chessboard::{
     ChessBoard,
@@ -14,15 +12,15 @@ pub use chessboard::{
 };
 
 pub use defs::{
-    Piece,
-    Color,
     BitBoard,
-    Square,
-    File,
-    Rank,
-    Direction,
     CastleSide,
-    SQUARES,
+    Color,
+    Direction,
+    File,
+    Piece,
+    Rank,
+    Square,
+    FILES,
     RANKS,
-    FILES
+    SQUARES
 };

@@ -84,7 +84,7 @@ impl MoveList {
     }
 
     /// Counts the total number of moves in the [`MoveList`].
-    pub fn count_moves(&self, chessboard: &ChessBoard) -> usize {
+    pub fn count_moves(&self, chessboard: &ChessBoard) -> u32 {
         // The total number of moves.
         let mut total = 0;
 
@@ -109,13 +109,13 @@ impl MoveList {
                 let normal = piece_moves.targets & !promotions;
 
                 // Each promotion move increases the total 4x.
-                total += 4 * promotions.popcnt() as usize;
+                total += 4 * promotions.popcnt() as u32;
 
                 // The rest of the moves increase the total normally.
-                total += normal.popcnt() as usize;
+                total += normal.popcnt() as u32;
             } else {
                 // Increase the total numer of moves.
-                total += piece_moves.targets.popcnt() as usize;
+                total += piece_moves.targets.popcnt() as u32;
             }
         }
 

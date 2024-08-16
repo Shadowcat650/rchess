@@ -1,8 +1,9 @@
 use super::tables;
 use super::zobrist::ZobristHash;
 use crate::defs::*;
-use crate::tables::{get_bishop_attacks, get_knight_attacks, get_pawn_attacks, get_rook_attacks};
+use crate::chessboard::tables::{get_bishop_attacks, get_knight_attacks, get_pawn_attacks, get_rook_attacks};
 use std::fmt::{Debug, Display, Formatter};
+use std::hash::{Hash, Hasher};
 
 /// The [`Move`] enum represents a move on a chess board.
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
@@ -46,6 +47,23 @@ pub enum Move {
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 struct CastlingRights(u8);
 
+/// The [`Footprint`] struct is used to identify a [`ChessBoard`] without lots of computed data.
+#[derive(Clone, Eq, PartialEq, Debug)]
+pub struct Footprint {
+    piece_bbs: [BitBoard; 6],
+    color_bbs: [BitBoard; 2],
+    castling_rights: CastlingRights,
+    en_passant: Option<Square>,
+    turn: Color,
+    hash: ZobristHash
+}
+
+impl Hash for Footprint {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        state.write_u64(self.hash.as_u64());
+    }
+}
+
 /// The [`ChessBoard`] struct represents a chess board.
 #[derive(Clone, Debug)]
 pub struct ChessBoard {
@@ -55,25 +73,25 @@ pub struct ChessBoard {
     /// Where the pieces of a given color are on the chess board.
     color_bbs: [BitBoard; 2],
 
-    /// Stores a map of the piece at a given square.
+    /// A map of the piece at a given square.
     piece_map: [Option<(Piece, Color)>; 64],
 
-    /// Stores the castling rights in the current position
+    /// The castling rights.
     castling_rights: CastlingRights,
 
-    /// Stores the square a pawn can move to while en passanting
+    /// The square that can be targeted by en passant.
     en_passant: Option<Square>,
 
-    /// The next color to make a move on the chessboard
+    /// The next color to make a move.
     turn: Color,
 
-    /// Stores the current pinned pieces
+    /// The pinned pieces.
     pinned: BitBoard,
 
-    /// Stores the pieces checking the king.
+    /// The pieces checking the king.
     checkers: BitBoard,
 
-    /// A hash of the chess board's state.
+    /// A hash of the board state.
     hash: ZobristHash,
 
     /// The half move clock.
@@ -84,7 +102,7 @@ impl ChessBoard {
     /// Creates a new [`ChessBoard`] in the starting position.
     #[inline]
     pub fn new() -> Self {
-        ChessBoard::from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -").unwrap()
+        ChessBoard::from_fen(START_FEN).unwrap()
     }
 
     /// Attempts to create a new [`ChessBoard`] from the given fen string.
@@ -671,18 +689,31 @@ impl ChessBoard {
 
     /// Gets the half move clock of the [`ChessBoard`].
     #[inline]
-    pub fn get_halfmoves(&self) -> u8 {
+    pub fn halfmoves(&self) -> u8 {
         self.half_move_clock
+    }
+
+    /// Gets a [`Footprint`] of the [`ChessBoard`].
+    #[inline]
+    pub fn footprint(&self) -> Footprint {
+        Footprint {
+            piece_bbs: self.piece_bbs.clone(),
+            color_bbs: self.color_bbs.clone(),
+            castling_rights: self.castling_rights,
+            en_passant: self.en_passant,
+            turn: self.turn,
+            hash: self.hash,
+        }
     }
 }
 
 impl PartialEq for ChessBoard {
     fn eq(&self, other: &Self) -> bool {
         (self.piece_bbs == other.piece_bbs) &&
-        (self.color_bbs == other.color_bbs) &&
-        (self.turn == other.turn) &&
-        (self.castling_rights == other.castling_rights) &&
-        (self.en_passant == other.en_passant)
+            (self.color_bbs == other.color_bbs) &&
+            (self.turn == other.turn) &&
+            (self.castling_rights == other.castling_rights) &&
+            (self.en_passant == other.en_passant)
     }
 }
 

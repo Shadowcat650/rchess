@@ -1,7 +1,7 @@
 use super::movelist::{MoveList, PieceMoves};
 use crate::chessboard::ChessBoard;
 use crate::defs::*;
-use crate::tables::{
+use crate::chessboard::tables::{
     get_bishop_attacks, get_connection_axis, get_direct_connection, get_king_attacks,
     get_knight_attacks, get_pawn_attacks, get_rook_attacks,
 };

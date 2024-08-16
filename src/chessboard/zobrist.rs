@@ -3,7 +3,7 @@ use crate::defs::*;
 
 include!(concat!(env!("OUT_DIR"), "/zobrist.rs"));
 
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
 /// The [`ZobristHash`] is the hash of a [`ChessBoard`].
 pub struct ZobristHash(u64);
 

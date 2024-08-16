@@ -16,7 +16,10 @@ pub use piece::*;
 pub use rank::*;
 pub use square::*;
 
-/// The direction a king can castle.
+/// The starting chess position's fen.
+pub const START_FEN: &str  = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -";
+
+/// The [`CastleSide`] enum represents the side a king can castle.
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum CastleSide {
     Kingside,

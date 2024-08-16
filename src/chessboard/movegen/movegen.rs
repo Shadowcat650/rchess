@@ -2,7 +2,7 @@ use super::movelist::MoveList;
 use crate::chessboard::{ChessBoard, Move};
 use crate::defs::*;
 use std::ops::Index;
-use crate::movegen::generator::generate_moves;
+use crate::chessboard::movegen::generator::generate_moves;
 
 /// Generates moves for a [`ChessBoard`].
 pub struct MoveGen<'a> {
@@ -59,18 +59,21 @@ impl<'a> MoveGen<'a> {
 
     /// Counts the number of legal moves for a given [`ChessBoard`].
     #[inline]
-    pub fn count_legal_moves(chessboard: &ChessBoard) -> usize {
+    pub fn count_legal_moves(chessboard: &ChessBoard) -> u32 {
         let mut moves = generate_moves::<false>(chessboard);
         moves.count_moves(chessboard)
     }
 
     /// Counts the number of moves left in the [`MoveGen`].
     #[inline]
-    pub fn count_moves(&self) -> usize {
+    pub fn count_moves(&self) -> u32 {
         self.moves.count_moves(self.chessboard)
     }
 
     /// Classifies a move string and turns it into a [`Move`] for a [`ChessBoard`].
+    ///
+    /// # Warning
+    /// The move string that is being classified must be legal.
     #[inline]
     pub fn classify_move_str(str: &str, chessboard: &ChessBoard) -> Result<Move, ()> {
         // The move string is too short.
@@ -135,11 +138,11 @@ impl<'a> MoveGen<'a> {
         }
 
         // Look for captures.
-        return Ok(if end.bitboard().overlaps(chessboard.color_occupancy(them)) {
+        Ok(if end.bitboard().overlaps(chessboard.color_occupancy(them)) {
             Move::Capture { start, end, moving }
         } else {
             Move::Quiet { start, end, moving }
-        });
+        })
     }
 
     /// Runs a debug perft on a given [`ChessBoard`], where the nodes for each move are printed.

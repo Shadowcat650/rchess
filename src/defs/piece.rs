@@ -50,7 +50,7 @@ impl Piece {
             'r' | 'R' => Some(Piece::Rook),
             'q' | 'Q' => Some(Piece::Queen),
             'k' | 'K' => Some(Piece::King),
-            _ => return None,
+            _ => None,
         }
     }
 
