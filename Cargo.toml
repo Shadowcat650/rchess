@@ -1,0 +1,23 @@
+[package]
+name = "rchess"
+version = "0.1.0"
+edition = "2021"
+build = "src/build.rs"
+
+[profile.dev.build-override]
+opt-level = 3
+
+[profile.test.build-override]
+opt-level = 3
+
+[profile.release.build-override]
+opt-level = 3
+
+[profile.test]
+opt-level = 3
+
+[build-dependencies]
+lazy_static = "1.5.0"
+fastrand = "2.1.0"
+
+[dependencies]

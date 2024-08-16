@@ -1,0 +1,9 @@
+# Rust generated files & directories
+target
+Cargo.lock
+
+# IDE files & directories
+.idea
+
+# MacOs
+.DS_Store
