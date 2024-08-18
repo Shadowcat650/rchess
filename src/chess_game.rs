@@ -1,15 +1,15 @@
-use std::collections::HashMap;
-use crate::{ChessBoard, Move, MoveGen, Square, ZobristHash};
 use crate::chessboard::Footprint;
 use crate::defs::START_FEN;
-use crate::File::C;
+use crate::{BitBoard, ChessBoard, Color, Move, MoveGen, Piece, Square, ZobristHash};
+use std::collections::HashMap;
+use std::ops::Index;
 
 /// The [`GameResult`] enum represents the result of a chess game.
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum GameResult {
     WhiteWins,
     BlackWins,
-    Draw { reason: DrawReason }
+    Draw { reason: DrawReason },
 }
 
 /// The [`DrawReason`] enum represents the thing that caused a draw to occur.
@@ -18,7 +18,7 @@ pub enum DrawReason {
     InsufficientMaterial,
     Stalemate,
     ThreefoldRepetition,
-    FiftyMoves
+    FiftyMoves,
 }
 
 /// The [`ChessGame`] struct represents a game of chess.
@@ -39,7 +39,7 @@ pub struct ChessGame {
     made_moves: Vec<Move>,
 
     /// The result of the chess game.
-    result: Option<GameResult>
+    result: Option<GameResult>,
 }
 
 impl ChessGame {
@@ -69,7 +69,8 @@ impl ChessGame {
         self.state.make_move(mv);
         self.made_moves.push(mv);
 
-        if let Move::Quiet { .. } = mv {} else {
+        if let Move::Quiet { .. } = mv {
+        } else {
             // Clear repetition history.
             self.history.clear();
         }
@@ -79,13 +80,72 @@ impl ChessGame {
 
             // Look for repetition.
             if *count == 3 {
-                self.result = Some(GameResult::Draw { reason: DrawReason::ThreefoldRepetition })
+                self.result = Some(GameResult::Draw {
+                    reason: DrawReason::ThreefoldRepetition,
+                })
             }
         } else {
             self.history.insert(self.state.footprint(), 1);
         }
 
         self.position_moves = MoveGen::legal(&self.state).to_vec();
+
+        // Look for checkmate/stalemate.
+        if self.position_moves.is_empty() {
+            if self.state.checkers().is_empty() {
+                self.result = Some(GameResult::Draw {
+                    reason: DrawReason::Stalemate,
+                })
+            } else {
+                self.result = Some(match self.state.turn() {
+                    Color::White => GameResult::BlackWins,
+                    Color::Black => GameResult::WhiteWins,
+                });
+            }
+        }
+
+        // Look for 50 move rule.
+        if self.state.halfmoves() >= 50 {
+            self.result = Some(GameResult::Draw {
+                reason: DrawReason::FiftyMoves,
+            })
+        }
+
+        if self.state.color_occupancy(Color::White).popcnt() == 1 {
+            if self.state.color_occupancy(Color::Black).popcnt() == 1 {
+                self.result = Some(GameResult::Draw {
+                    reason: DrawReason::InsufficientMaterial
+                })
+            } else if self.state.color_occupancy(Color::Black).popcnt() == 2 {
+                if !self.state.query(Piece::Bishop, Color::Black).is_empty() || !self.state.query(Piece::Knight, Color::Black).is_empty() {
+                    self.result = Some(GameResult::Draw {
+                        reason: DrawReason::InsufficientMaterial
+                    })
+                }
+            }
+        } else if self.state.color_occupancy(Color::White).popcnt() == 2 {
+            if self.state.color_occupancy(Color::Black).popcnt() == 2 {
+                if self.state.query(Piece::Bishop, Color::White).overlaps(BitBoard::WHITE_SQUARES) {
+                    if self.state.query(Piece::Bishop, Color::Black).overlaps(BitBoard::WHITE_SQUARES) {
+                        self.result = Some(GameResult::Draw {
+                            reason: DrawReason::InsufficientMaterial
+                        })
+                    }
+                } else if self.state.query(Piece::Bishop, Color::White).overlaps(BitBoard::BLACK_SQUARES) {
+                    if self.state.query(Piece::Bishop, Color::Black).overlaps(BitBoard::BLACK_SQUARES) {
+                        self.result = Some(GameResult::Draw {
+                            reason: DrawReason::InsufficientMaterial
+                        })
+                    }
+                }
+            } else if self.state.color_occupancy(Color::Black).popcnt() == 1 {
+                if !self.state.query(Piece::Bishop, Color::White).is_empty() || !self.state.query(Piece::Knight, Color::White).is_empty() {
+                    self.result = Some(GameResult::Draw {
+                        reason: DrawReason::InsufficientMaterial
+                    })
+                }
+            }
+        }
     }
 
     pub fn result(&self) -> Option<GameResult> {
@@ -97,22 +157,34 @@ impl ChessGame {
     }
 
     pub fn create_move(&self, start_sq: Square, end_sq: Square) -> Result<Move, ()> {
-        if let Some(mv) = self.position_moves.iter().find(|mv| {
-            match *mv {
-                Move::Quiet { start, end, .. } |
-                Move::Capture { start, end, .. } |
-                Move::Castle { start, end, .. } |
-                Move::DoublePawnPush { start, end, .. } |
-                Move::EnPassant { start, end, .. } |
-                Move::Promote { start, end, .. } |
-                Move::PromoteCapture { start, end, .. } => *start == start_sq && *end == end_sq
-            }
+        if let Some(mv) = self.position_moves.iter().find(|mv| match *mv {
+            Move::Quiet { start, end, .. }
+            | Move::Capture { start, end, .. }
+            | Move::Castle { start, end, .. }
+            | Move::DoublePawnPush { start, end, .. }
+            | Move::EnPassant { start, end, .. }
+            | Move::Promote { start, end, .. }
+            | Move::PromoteCapture { start, end, .. } => *start == start_sq && *end == end_sq,
         }) {
             Ok(*mv)
         } else {
             Err(())
         }
     }
+
+    pub fn create_str_move(&self, str: &str) -> Result<Move, ()> {
+        if str.len() < 4 {
+            return Err(());
+        }
+
+        // Get move start & end squares.
+        let start = Square::from_string(str.index(0..=1))?;
+        let end = Square::from_string(str.index(2..=3))?;
+
+        self.create_move(start, end)
+    }
+
+    pub fn board(&self) -> &ChessBoard {
+        &self.state
+    }
 }
-
-

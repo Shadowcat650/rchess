@@ -1,26 +1,15 @@
+mod chess_game;
 mod chessboard;
 mod defs;
-mod chess_game;
 
 pub use chessboard::movegen::MoveGen;
 
 pub use chessboard::zobrist::ZobristHash;
 
-pub use chessboard::{
-    ChessBoard,
-    Move
-};
+pub use chess_game::{ChessGame, DrawReason, GameResult};
+
+pub use chessboard::{ChessBoard, Move};
 
 pub use defs::{
-    BitBoard,
-    CastleSide,
-    Color,
-    Direction,
-    File,
-    Piece,
-    Rank,
-    Square,
-    FILES,
-    RANKS,
-    SQUARES
+    BitBoard, CastleSide, Color, Direction, File, Piece, Rank, Square, FILES, RANKS, SQUARES,
 };

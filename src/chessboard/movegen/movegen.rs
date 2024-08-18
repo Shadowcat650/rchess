@@ -1,8 +1,8 @@
 use super::movelist::MoveList;
+use crate::chessboard::movegen::generator::generate_moves;
 use crate::chessboard::{ChessBoard, Move};
 use crate::defs::*;
 use std::ops::Index;
-use crate::chessboard::movegen::generator::generate_moves;
 
 /// Generates moves for a [`ChessBoard`].
 pub struct MoveGen<'a> {
@@ -15,7 +15,7 @@ pub struct MoveGen<'a> {
 enum PromoteStatus {
     PromoteBishop,
     PromoteRook,
-    PromoteQueen
+    PromoteQueen,
 }
 
 impl<'a> MoveGen<'a> {
@@ -94,7 +94,7 @@ impl<'a> MoveGen<'a> {
         if moving == Piece::Pawn {
             let (start_rank, double_rank, promote_rank) = match us {
                 Color::White => (Rank::Second, Rank::Fourth, Rank::Eighth),
-                Color::Black => (Rank::Seventh, Rank::Fifth, Rank::First)
+                Color::Black => (Rank::Seventh, Rank::Fifth, Rank::First),
             };
 
             // Look for double pawn push.
@@ -112,15 +112,17 @@ impl<'a> MoveGen<'a> {
                     'b' => Piece::Bishop,
                     'r' => Piece::Rook,
                     'q' => Piece::Queen,
-                    _ => return Err(())
+                    _ => return Err(()),
                 };
 
                 // Look for captures.
-                return Ok(if end.bitboard().overlaps(chessboard.color_occupancy(them)) {
-                    Move::PromoteCapture { start, end, target }
-                } else {
-                    Move::Promote { start, end, target }
-                });
+                return Ok(
+                    if end.bitboard().overlaps(chessboard.color_occupancy(them)) {
+                        Move::PromoteCapture { start, end, target }
+                    } else {
+                        Move::Promote { start, end, target }
+                    },
+                );
             }
         }
         // Look for castles.
@@ -131,18 +133,28 @@ impl<'a> MoveGen<'a> {
             };
 
             if start == castle_start && end == ks_end {
-                return Ok(Move::Castle { start, end, side: CastleSide::Kingside });
+                return Ok(Move::Castle {
+                    start,
+                    end,
+                    side: CastleSide::Kingside,
+                });
             } else if start == castle_start && end == qs_end {
-                return Ok(Move::Castle { start, end, side: CastleSide::Queenside });
+                return Ok(Move::Castle {
+                    start,
+                    end,
+                    side: CastleSide::Queenside,
+                });
             }
         }
 
         // Look for captures.
-        Ok(if end.bitboard().overlaps(chessboard.color_occupancy(them)) {
-            Move::Capture { start, end, moving }
-        } else {
-            Move::Quiet { start, end, moving }
-        })
+        Ok(
+            if end.bitboard().overlaps(chessboard.color_occupancy(them)) {
+                Move::Capture { start, end, moving }
+            } else {
+                Move::Quiet { start, end, moving }
+            },
+        )
     }
 
     /// Runs a debug perft on a given [`ChessBoard`], where the nodes for each move are printed.
@@ -233,17 +245,22 @@ impl Iterator for MoveGen<'_> {
             };
 
             // Look for captures.
-            return Some(if end.bitboard().overlaps(self.chessboard.color_occupancy(them)) {
-                Move::PromoteCapture { start, end, target }
-            } else {
-                Move::Promote { start, end, target }
-            });
+            return Some(
+                if end
+                    .bitboard()
+                    .overlaps(self.chessboard.color_occupancy(them))
+                {
+                    Move::PromoteCapture { start, end, target }
+                } else {
+                    Move::Promote { start, end, target }
+                },
+            );
         }
         // Look for special pawn moves
         else if moving == Piece::Pawn {
             let (start_rank, double_rank, promote_rank) = match us {
                 Color::White => (Rank::Second, Rank::Fourth, Rank::Eighth),
-                Color::Black => (Rank::Seventh, Rank::Fifth, Rank::First)
+                Color::Black => (Rank::Seventh, Rank::Fifth, Rank::First),
             };
 
             // Look for double pawn push.
@@ -261,11 +278,24 @@ impl Iterator for MoveGen<'_> {
                 self.promote_status = Some(PromoteStatus::PromoteBishop);
 
                 // Look for captures.
-                return Some(if end.bitboard().overlaps(self.chessboard.color_occupancy(them)) {
-                    Move::PromoteCapture { start, end, target: Piece::Knight }
-                } else {
-                    Move::Promote { start, end, target: Piece::Knight }
-                });
+                return Some(
+                    if end
+                        .bitboard()
+                        .overlaps(self.chessboard.color_occupancy(them))
+                    {
+                        Move::PromoteCapture {
+                            start,
+                            end,
+                            target: Piece::Knight,
+                        }
+                    } else {
+                        Move::Promote {
+                            start,
+                            end,
+                            target: Piece::Knight,
+                        }
+                    },
+                );
             }
         }
         // Look for castles.
@@ -277,10 +307,18 @@ impl Iterator for MoveGen<'_> {
 
             if start == castle_start && end == ks_end {
                 self.moves.back_mut().unwrap().targets ^= end.bitboard();
-                return Some(Move::Castle { start, end, side: CastleSide::Kingside });
+                return Some(Move::Castle {
+                    start,
+                    end,
+                    side: CastleSide::Kingside,
+                });
             } else if start == castle_start && end == qs_end {
                 self.moves.back_mut().unwrap().targets ^= end.bitboard();
-                return Some(Move::Castle { start, end, side: CastleSide::Queenside });
+                return Some(Move::Castle {
+                    start,
+                    end,
+                    side: CastleSide::Queenside,
+                });
             }
         }
 
@@ -288,11 +326,16 @@ impl Iterator for MoveGen<'_> {
         self.moves.back_mut().unwrap().targets ^= end.bitboard();
 
         // Look for captures.
-        Some(if end.bitboard().overlaps(self.chessboard.color_occupancy(them)) {
-            Move::Capture { start, end, moving }
-        } else {
-            Move::Quiet { start, end, moving }
-        })
+        Some(
+            if end
+                .bitboard()
+                .overlaps(self.chessboard.color_occupancy(them))
+            {
+                Move::Capture { start, end, moving }
+            } else {
+                Move::Quiet { start, end, moving }
+            },
+        )
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
@@ -301,4 +344,4 @@ impl Iterator for MoveGen<'_> {
     }
 }
 
-impl ExactSizeIterator for MoveGen<'_> { }
+impl ExactSizeIterator for MoveGen<'_> {}

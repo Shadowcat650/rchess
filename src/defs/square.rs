@@ -1,4 +1,4 @@
-use super::{BitBoard, File, Rank};
+use super::{BitBoard, Color, File, Rank};
 use std::fmt::{Display, Formatter};
 
 /// All the squares in order.
@@ -220,6 +220,26 @@ impl Square {
     #[inline]
     pub const fn bitboard(&self) -> BitBoard {
         BitBoard::from_square(*self)
+    }
+
+    /// Gets the [`Color`] of the [`Square`].
+    ///
+    /// # Examples
+    /// ```
+    /// use rchess::{Color, Square};
+    ///
+    /// assert_eq!(Square::A1.color(), Color::Black);
+    /// assert_eq!(Square::H1.color(), Color::White);
+    /// assert_eq!(Square::H8.color(), Color::Black);
+    /// assert_eq!(Square::A8.color(), Color::White);
+    /// ```
+    #[inline]
+    pub const fn color(&self) -> Color {
+        if self.bitboard().overlaps(BitBoard::WHITE_SQUARES) {
+            Color::White
+        } else {
+            Color::Black
+        }
     }
 
     /// Moves the [`Square`] up one rank.

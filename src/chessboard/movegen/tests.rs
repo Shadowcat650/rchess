@@ -1,6 +1,6 @@
-use crate::chessboard::ChessBoard;
 use crate::chessboard::movegen::MoveGen;
 use crate::chessboard::tables;
+use crate::chessboard::ChessBoard;
 use std::thread;
 
 #[test]

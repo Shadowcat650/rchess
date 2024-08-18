@@ -1,0 +1,17 @@
+[package]
+name = "terminal-game"
+version = "0.1.0"
+edition = "2021"
+
+[profile.dev.build-override]
+opt-level = 3
+
+[profile.test.build-override]
+opt-level = 3
+
+[profile.release.build-override]
+opt-level = 3
+
+
+[dependencies]
+rchess = { path = "../../." }

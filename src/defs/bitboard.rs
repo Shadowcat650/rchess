@@ -1,4 +1,4 @@
-use super::{File, Rank, Square, Direction, FILES, RANKS};
+use super::{Direction, File, Rank, Square, FILES, RANKS};
 use std::fmt::{Display, Formatter};
 use std::ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Not};
 
@@ -14,6 +14,16 @@ impl BitBoard {
 
     /// A [`BitBoard`] with all the squares stored.
     pub const FULL: BitBoard = Self { val: u64::MAX };
+
+    /// A [`BitBoard`] with all the white squares stored.
+    pub const WHITE_SQUARES: BitBoard = Self {
+        val: 0x55AA55AA55AA55AA
+    };
+
+    /// A [`BitBoard`] with all the black squares stored.
+    pub const BLACK_SQUARES: BitBoard = Self {
+        val: 0xAA55AA55AA55AA55
+    };
 
     /// Creates a new [`BitBoard`] containing only the given [`Square`].
     ///

@@ -1,6 +1,6 @@
 mod generator;
-mod movelist;
 mod movegen;
+mod movelist;
 #[cfg(test)]
 mod tests;
 

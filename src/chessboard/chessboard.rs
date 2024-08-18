@@ -1,9 +1,13 @@
 use super::tables;
 use super::zobrist::ZobristHash;
+use crate::chessboard::tables::{
+    get_bishop_attacks, get_knight_attacks, get_pawn_attacks, get_rook_attacks,
+};
 use crate::defs::*;
-use crate::chessboard::tables::{get_bishop_attacks, get_knight_attacks, get_pawn_attacks, get_rook_attacks};
 use std::fmt::{Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
+use crate::chessboard::builder::BoardBuilder;
+use crate::chessboard::castling_rights::CastlingRights;
 
 /// The [`Move`] enum represents a move on a chess board.
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
@@ -43,10 +47,6 @@ pub enum Move {
     },
 }
 
-/// The [`CastlingRights`] struct stores which sides and colors can castle
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
-struct CastlingRights(u8);
-
 /// The [`Footprint`] struct is used to identify a [`ChessBoard`] without lots of computed data.
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub struct Footprint {
@@ -55,7 +55,7 @@ pub struct Footprint {
     castling_rights: CastlingRights,
     en_passant: Option<Square>,
     turn: Color,
-    hash: ZobristHash
+    hash: ZobristHash,
 }
 
 impl Hash for Footprint {
@@ -108,19 +108,8 @@ impl ChessBoard {
     /// Attempts to create a new [`ChessBoard`] from the given fen string.
     #[inline]
     pub fn from_fen(fen: &str) -> Result<Self, ()> {
-        // Create an empty chess board.
-        let mut chessboard = Self {
-            piece_bbs: [BitBoard::EMPTY; 6],
-            color_bbs: [BitBoard::EMPTY; 2],
-            piece_map: [None; 64],
-            castling_rights: CastlingRights::new(),
-            en_passant: None,
-            turn: Color::White,
-            pinned: BitBoard::EMPTY,
-            checkers: BitBoard::EMPTY,
-            hash: ZobristHash::new(),
-            half_move_clock: 0,
-        };
+        // Create a board builder.
+        let mut builder = BoardBuilder::new();
 
         // Split the fen into chunks.
         let mut fen = fen.split_whitespace();
@@ -139,7 +128,7 @@ impl ChessBoard {
                         Color::Black
                     };
                     let square = Square::from_u8(square_idx).ok_or(())?;
-                    chessboard.insert(square, piece, color);
+                    builder = builder.piece(square, piece, color)?;
                     square_idx += 1;
                 }
                 // Skip empty squares.
@@ -157,68 +146,99 @@ impl ChessBoard {
         // Load fen turn.
         let fen_turn = fen.next().ok_or(())?;
         match fen_turn {
-            // The turn in already set to white, so toggle it to black.
-            "b" => chessboard.toggle_turn(),
-            // The turn is already white.
-            "w" => (),
-            // Unrecognized character.
+            "w" => builder = builder.turn(Color::White)?,
+            "b" => builder = builder.turn(Color::Black)?,
             _ => return Err(()),
         }
 
         // Load fen castling rights.
         let fen_castling_rights = fen.next().ok_or(())?;
-        for c in fen_castling_rights.chars() {
-            match c {
-                // White Kingside
-                'K' => {
-                    if !chessboard
-                        .castling_rights
-                        .is_set(CastleSide::Kingside, Color::White)
-                    {
-                        chessboard.set_castle_right(CastleSide::Kingside, Color::White);
-                    }
+        if fen_castling_rights == "-" {} else {
+            for c in fen_castling_rights.chars() {
+                match c {
+                    'K' => builder = builder.castle_right(CastleSide::Kingside, Color::White)?,
+                    'Q' => builder = builder.castle_right(CastleSide::Queenside, Color::White)?,
+                    'k' => builder = builder.castle_right(CastleSide::Kingside, Color::Black)?,
+                    'q' => builder = builder.castle_right(CastleSide::Queenside, Color::Black)?,
+                    _ => return Err(()),
                 }
-                // White Queenside
-                'Q' => {
-                    if !chessboard
-                        .castling_rights
-                        .is_set(CastleSide::Queenside, Color::White)
-                    {
-                        chessboard.set_castle_right(CastleSide::Queenside, Color::White);
-                    }
-                }
-                // Black Kingside
-                'k' => {
-                    if !chessboard
-                        .castling_rights
-                        .is_set(CastleSide::Kingside, Color::Black)
-                    {
-                        chessboard.set_castle_right(CastleSide::Kingside, Color::Black);
-                    }
-                }
-                // Black Queenside
-                'q' => {
-                    if !chessboard
-                        .castling_rights
-                        .is_set(CastleSide::Queenside, Color::Black)
-                    {
-                        chessboard.set_castle_right(CastleSide::Queenside, Color::Black);
-                    }
-                }
-                // No castling rights.
-                '-' => break,
-                // Unrecognized character.
-                _ => return Err(()),
             }
         }
 
         // Load fen en passant square.
         let fen_en_passant = fen.next().ok_or(())?;
         if let Ok(square) = Square::from_string(fen_en_passant) {
-            chessboard.set_ep(square);
+            builder = builder.en_passant(square)?;
+        } else if fen_en_passant != "-" {
+            return Err(());
         }
 
-        // Calculate non-fen information
+        Self::from_builder(builder)
+    }
+
+    pub fn from_builder(board_builder: BoardBuilder) -> Result<Self, ()> {
+        if board_builder.turn.is_none() {
+            return Err(());
+        }
+
+        let turn = board_builder.turn.unwrap();
+
+        if board_builder.piece_bbs[Piece::King.index()].popcnt() != 2 {
+            return Err(());
+        }
+
+        if let Some(sq) = board_builder.en_passant_square {
+            match turn {
+                Color::White => if sq.rank() != Rank::Sixth { return Err(()); },
+                Color::Black => if sq.rank() != Rank::Third { return Err(()); },
+            }
+        }
+
+        if board_builder.castling_rights.is_set(CastleSide::Kingside, Color::White) {
+            if board_builder.piece_map[Square::E1.index()] != Some((Piece::King, Color::White))  ||
+                board_builder.piece_map[Square::H1.index()] != Some((Piece::Rook, Color::White)) {
+                return Err(());
+            }
+        }
+
+        if board_builder.castling_rights.is_set(CastleSide::Queenside, Color::White) {
+            if board_builder.piece_map[Square::E1.index()] != Some((Piece::King, Color::White))  ||
+                board_builder.piece_map[Square::A1.index()] != Some((Piece::Rook, Color::White)) {
+                return Err(());
+            }
+        }
+
+        if board_builder.castling_rights.is_set(CastleSide::Kingside, Color::Black) {
+            if board_builder.piece_map[Square::E8.index()] != Some((Piece::King, Color::Black))  ||
+                board_builder.piece_map[Square::H8.index()] != Some((Piece::Rook, Color::Black)) {
+                return Err(());
+            }
+        }
+
+        if board_builder.castling_rights.is_set(CastleSide::Kingside, Color::Black) {
+            if board_builder.piece_map[Square::E8.index()] != Some((Piece::King, Color::Black))  ||
+                board_builder.piece_map[Square::A8.index()] != Some((Piece::Rook, Color::Black)) {
+                return Err(());
+            }
+        }
+
+        let mut chessboard = Self {
+            piece_bbs: board_builder.piece_bbs,
+            color_bbs: board_builder.color_bbs,
+            piece_map: board_builder.piece_map,
+            castling_rights: board_builder.castling_rights,
+            en_passant: None,
+            turn,
+            pinned: BitBoard::EMPTY,
+            checkers: BitBoard::EMPTY,
+            hash: board_builder.hash,
+            half_move_clock: 0,
+        };
+
+        if chessboard.is_attacked(chessboard.get_king_square(!chessboard.turn), chessboard.turn) {
+            return Err(());
+        }
+
         chessboard.calculate_extra_data();
 
         Ok(chessboard)
@@ -548,6 +568,30 @@ impl ChessBoard {
             (self.query(Piece::Rook, them) | self.query(Piece::Queen, them)) & rook_check_locations;
     }
 
+    /// Returns `true` if the given [`Square`] is attacked by the given [`Color`].
+    #[inline]
+    pub fn is_attacked(&self, square: Square, by: Color) -> bool {
+        let us = !by;
+
+        // Look for pawn checkers.
+        let pawn_check_locations = get_pawn_attacks(square, us);
+        if self.query(Piece::Pawn, by).overlaps(pawn_check_locations) { return true; }
+
+        // Look for knight checkers.
+        let knight_check_locations = get_knight_attacks(square);
+        if self.query(Piece::Knight, by).overlaps(knight_check_locations) { return true; }
+
+        // Look for bishop & queen checkers.
+        let bishop_check_locations = get_bishop_attacks(square, self.occupancy());
+        if (self.query(Piece::Bishop, by) | self.query(Piece::Queen, by)).overlaps(bishop_check_locations) { return true; };
+
+        // Look for rook & queen checkers.
+        let rook_check_locations = get_rook_attacks(square, self.occupancy());
+        if (self.query(Piece::Rook, by) | self.query(Piece::Queen, by)).overlaps(rook_check_locations) { return true; }
+
+        false
+    }
+
     /// Inserts a new piece into the [`ChessBoard`].
     ///
     /// Note: This function assumes that there is not already a piece at the given [`Square`].
@@ -709,15 +753,15 @@ impl ChessBoard {
 
 impl PartialEq for ChessBoard {
     fn eq(&self, other: &Self) -> bool {
-        (self.piece_bbs == other.piece_bbs) &&
-            (self.color_bbs == other.color_bbs) &&
-            (self.turn == other.turn) &&
-            (self.castling_rights == other.castling_rights) &&
-            (self.en_passant == other.en_passant)
+        (self.piece_bbs == other.piece_bbs)
+            && (self.color_bbs == other.color_bbs)
+            && (self.turn == other.turn)
+            && (self.castling_rights == other.castling_rights)
+            && (self.en_passant == other.en_passant)
     }
 }
 
-impl Eq for ChessBoard { }
+impl Eq for ChessBoard {}
 
 const ANSI_RESET_CODE: &str = "\x1b[0m";
 const ANSI_GRAY_CODE: &str = "\x1b[90m";
@@ -768,68 +812,6 @@ impl Display for Move {
             Move::Promote { start, end, target } | Move::PromoteCapture { start, end, target } => {
                 write!(f, "{}{}{}", start, end, target.to_char())
             }
-        }
-    }
-}
-
-impl CastlingRights {
-    /// White king castling right bit
-    const WHITE_KING: u8 = 0b1;
-
-    /// White queen castling right bit
-    const WHITE_QUEEN: u8 = 0b10;
-
-    /// Black king castling right bit
-    const BLACK_KING: u8 = 0b100;
-
-    /// Black queen castling right bit
-    const BLACK_QUEEN: u8 = 0b1000;
-
-    /// Creates a new [`CastlingRights`] struct with no rights stored.
-    fn new() -> Self {
-        Self(0)
-    }
-
-    /// Checks if there are no castling rights set.
-    fn is_none_set(&self) -> bool {
-        self.0 == 0
-    }
-
-    /// Checks if a castling right is set for a given [`CastleSide`] and [`Color`].
-    fn is_set(&self, side: CastleSide, color: Color) -> bool {
-        match (side, color) {
-            (CastleSide::Kingside, Color::Black) => self.0 & Self::BLACK_KING != 0,
-            (CastleSide::Kingside, Color::White) => self.0 & Self::WHITE_KING != 0,
-            (CastleSide::Queenside, Color::Black) => self.0 & Self::BLACK_QUEEN != 0,
-            (CastleSide::Queenside, Color::White) => self.0 & Self::WHITE_QUEEN != 0,
-        }
-    }
-
-    /// Sets a given castling right for a given [`CastleSide`] and [`Color`].
-    fn set(&mut self, side: CastleSide, color: Color) {
-        match (side, color) {
-            (CastleSide::Kingside, Color::Black) => self.0 |= Self::BLACK_KING,
-            (CastleSide::Kingside, Color::White) => self.0 |= Self::WHITE_KING,
-            (CastleSide::Queenside, Color::Black) => self.0 |= Self::BLACK_QUEEN,
-            (CastleSide::Queenside, Color::White) => self.0 |= Self::WHITE_QUEEN,
-        };
-    }
-
-    /// Unsets a given castling right for a given [`CastleSide`] and [`Color`].
-    fn unset(&mut self, side: CastleSide, color: Color) {
-        match (side, color) {
-            (CastleSide::Kingside, Color::Black) => self.0 &= !Self::BLACK_KING,
-            (CastleSide::Kingside, Color::White) => self.0 &= !Self::WHITE_KING,
-            (CastleSide::Queenside, Color::Black) => self.0 &= !Self::BLACK_QUEEN,
-            (CastleSide::Queenside, Color::White) => self.0 &= !Self::WHITE_QUEEN,
-        };
-    }
-
-    /// Unsets the castling rights for a given [`Color`].
-    fn unset_color(&mut self, color: Color) {
-        match color {
-            Color::White => self.0 &= !(Self::WHITE_KING | Self::WHITE_QUEEN),
-            Color::Black => self.0 &= !(Self::BLACK_KING | Self::BLACK_QUEEN),
         }
     }
 }
