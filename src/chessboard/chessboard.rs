@@ -73,9 +73,6 @@ pub struct ChessBoard {
     /// Where the pieces of a given color are on the chess board.
     color_bbs: [BitBoard; 2],
 
-    /// A map of the piece at a given square.
-    piece_map: [Option<(Piece, Color)>; 64],
-
     /// The castling rights.
     castling_rights: CastlingRights,
 
@@ -241,7 +238,6 @@ impl ChessBoard {
         let mut chessboard = Self {
             piece_bbs: board_builder.piece_bbs,
             color_bbs: board_builder.color_bbs,
-            piece_map: board_builder.piece_map,
             castling_rights: board_builder.castling_rights,
             en_passant: None,
             turn,
@@ -614,7 +610,6 @@ impl ChessBoard {
     fn insert(&mut self, square: Square, piece: Piece, color: Color) {
         self.piece_bbs[piece.index()] |= square.bitboard();
         self.color_bbs[color.index()] |= square.bitboard();
-        self.piece_map[square.index()] = Some((piece, color));
         self.hash.piece(square, piece, color);
     }
 
@@ -625,7 +620,6 @@ impl ChessBoard {
         let (piece, color) = self.piece_at(square).unwrap();
         self.piece_bbs[piece.index()] ^= square.bitboard();
         self.color_bbs[color.index()] ^= square.bitboard();
-        self.piece_map[square.index()] = None;
         self.hash.piece(square, piece, color);
     }
 
@@ -635,8 +629,6 @@ impl ChessBoard {
     fn move_piece(&mut self, start: Square, end: Square, piece: Piece, color: Color) {
         self.piece_bbs[piece.index()] ^= start.bitboard() | end.bitboard();
         self.color_bbs[color.index()] ^= start.bitboard() | end.bitboard();
-        self.piece_map[start.index()] = None;
-        self.piece_map[end.index()] = Some((piece, color));
         self.hash.piece(start, piece, color);
         self.hash.piece(end, piece, color);
     }
@@ -678,7 +670,36 @@ impl ChessBoard {
     /// Gets the piece at the given [`Square`].
     #[inline]
     pub fn piece_at(&self, square: Square) -> Option<(Piece, Color)> {
-        return self.piece_map[square.index()];
+        let color = if self.color_bbs[Color::White.index()].overlaps(square.bitboard()) {
+            Color::White
+        } else if self.color_bbs[Color::Black.index()].overlaps(square.bitboard()) {
+            Color::Black
+        } else {
+            return None;
+        };
+
+        let pnr = self.piece_bbs[Piece::Pawn.index()]
+            | self.piece_bbs[Piece::Knight.index()]
+            | self.piece_bbs[Piece::Rook.index()];
+        let piece = if pnr.overlaps(square.bitboard()) {
+            if self.piece_bbs[Piece::Pawn.index()].overlaps(square.bitboard()) {
+                Piece::Pawn
+            } else if self.piece_bbs[Piece::Knight.index()].overlaps(square.bitboard()) {
+                Piece::Knight
+            } else {
+                Piece::Rook
+            }
+        } else {
+            if self.piece_bbs[Piece::Bishop.index()].overlaps(square.bitboard()) {
+                Piece::Bishop
+            } else if self.piece_bbs[Piece::Queen.index()].overlaps(square.bitboard()) {
+                Piece::Queen
+            } else {
+                Piece::King
+            }
+        };
+
+        Some((piece, color))
     }
 
     /// Gets a [`BitBoard`] containing the locations of all the pieces of a given piece type and color.

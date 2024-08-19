@@ -4,10 +4,17 @@ version = "0.1.0"
 edition = "2021"
 build = "src/build.rs"
 
+[[bench]]
+name = "perfts"
+harness = false
+
 [profile.dev.build-override]
 opt-level = 3
 
 [profile.test.build-override]
+opt-level = 3
+
+[profile.bench.build-override]
 opt-level = 3
 
 [profile.release.build-override]
@@ -19,5 +26,8 @@ opt-level = 3
 [build-dependencies]
 lazy_static = "1.5.0"
 fastrand = "2.1.0"
+
+[dev-dependencies]
+criterion = "0.5.1"
 
 [dependencies]
