@@ -8,7 +8,7 @@ pub use chessboard::zobrist::ZobristHash;
 
 pub use chess_game::{ChessGame, DrawReason, GameResult};
 
-pub use chessboard::{ChessBoard, Move};
+pub use chessboard::{ChessBoard, Move, BoardBuilder};
 
 pub use defs::{
     BitBoard, CastleSide, Color, Direction, File, Piece, Rank, Square, FILES, RANKS, SQUARES,

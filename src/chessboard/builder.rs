@@ -1,6 +1,6 @@
 use crate::chessboard::castling_rights::CastlingRights;
 use crate::defs::*;
-use crate::ZobristHash;
+use crate::{ChessBoard, ZobristHash};
 
 /// The [`BoardBuilder`] struct helps construct a [`ChessBoard`].
 pub struct BoardBuilder {
@@ -83,5 +83,9 @@ impl BoardBuilder {
         self.hash.ep(square);
 
         Ok(self)
+    }
+
+    pub fn finish(self) -> Result<ChessBoard, ()> {
+        ChessBoard::from_builder(self)
     }
 }

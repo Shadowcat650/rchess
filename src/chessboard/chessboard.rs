@@ -189,8 +189,24 @@ impl ChessBoard {
 
         if let Some(sq) = board_builder.en_passant_square {
             match turn {
-                Color::White => if sq.rank() != Rank::Sixth { return Err(()); },
-                Color::Black => if sq.rank() != Rank::Third { return Err(()); },
+                Color::White => {
+                    if sq.rank() != Rank::Sixth {
+                        return Err(());
+                    }
+
+                    if Some((Piece::Pawn, Color::Black)) != board_builder.piece_map[sq.down().unwrap().index()] {
+                        return Err(());
+                    }
+                },
+                Color::Black => {
+                    if sq.rank() != Rank::Third {
+                        return Err(());
+                    }
+
+                    if Some((Piece::Pawn, Color::White)) != board_builder.piece_map[sq.up().unwrap().index()] {
+                        return Err(());
+                    }
+                },
             }
         }
 

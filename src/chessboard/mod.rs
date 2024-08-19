@@ -6,4 +6,5 @@ mod builder;
 mod castling_rights;
 
 pub use chessboard::{ChessBoard, Footprint, Move};
+pub use builder::BoardBuilder;
 pub use movegen::MoveGen;
