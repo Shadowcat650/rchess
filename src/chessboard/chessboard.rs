@@ -8,6 +8,7 @@ use std::fmt::{Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
 use crate::chessboard::builder::BoardBuilder;
 use crate::chessboard::castling_rights::CastlingRights;
+use crate::MoveGen;
 
 /// The [`Move`] enum represents a move on a chess board.
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
@@ -102,6 +103,17 @@ impl ChessBoard {
         ChessBoard::from_fen(START_FEN).unwrap()
     }
 
+    /// Creates a new [`ChessBoard`] with the given moves made on it.
+    #[inline]
+    pub fn from_str_moves(moves: &[&str]) -> Result<Self, ()> {
+        let mut board = Self::new();
+        for str_move in moves {
+            let mv = MoveGen::classify_move_str(*str_move, &board)?;
+            board.make_move(mv);
+        }
+        Ok(board)
+    }
+
     /// Attempts to create a new [`ChessBoard`] from the given fen string.
     #[inline]
     pub fn from_fen(fen: &str) -> Result<Self, ()> {
@@ -173,6 +185,7 @@ impl ChessBoard {
         Self::from_builder(builder)
     }
 
+    /// Creates a new [`ChessBoard`] from the given [`BoardBuilder`].
     pub fn from_builder(board_builder: BoardBuilder) -> Result<Self, ()> {
         if board_builder.turn.is_none() {
             return Err(());
@@ -359,7 +372,7 @@ impl ChessBoard {
             Move::Quiet { start, end, moving } => {
                 // Remove relevant castling rights for moving kings or rooks.
                 if moving == Piece::King {
-                    self.castling_rights.unset_color(us)
+                    self.unset_color_rights(us)
                 } else if moving == Piece::Rook {
                     match (us, start) {
                         (Color::Black, Square::A8) => {
@@ -383,7 +396,7 @@ impl ChessBoard {
             Move::Capture { start, end, moving } => {
                 // Remove relevant castling rights for moving kings or rooks.
                 if moving == Piece::King {
-                    self.castling_rights.unset_color(us)
+                    self.unset_color_rights(us)
                 } else if moving == Piece::Rook {
                     match (us, start) {
                         (Color::Black, Square::A8) => {
@@ -443,7 +456,7 @@ impl ChessBoard {
                 self.move_piece(start, end, Piece::King, us);
 
                 // Unset castling rights for the side that moved.
-                self.castling_rights.unset_color(us);
+                self.unset_color_rights(us);
             }
             Move::DoublePawnPush { start, end } => {
                 // Set the en passant square.
@@ -651,6 +664,12 @@ impl ChessBoard {
             self.castling_rights.unset(side, color);
             self.hash.castle_right(side, color);
         }
+    }
+
+    /// Unsets all the castling rights for a given color.
+    fn unset_color_rights(&mut self, color: Color) {
+        self.unset_castle_right(CastleSide::Kingside, color);
+        self.unset_castle_right(CastleSide::Queenside, color);
     }
 
     /// Sets the en passant square.
