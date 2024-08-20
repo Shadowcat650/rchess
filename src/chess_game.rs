@@ -114,34 +114,54 @@ impl ChessGame {
         if self.state.color_occupancy(Color::White).popcnt() == 1 {
             if self.state.color_occupancy(Color::Black).popcnt() == 1 {
                 self.result = Some(GameResult::Draw {
-                    reason: DrawReason::InsufficientMaterial
+                    reason: DrawReason::InsufficientMaterial,
                 })
             } else if self.state.color_occupancy(Color::Black).popcnt() == 2 {
-                if !self.state.query(Piece::Bishop, Color::Black).is_empty() || !self.state.query(Piece::Knight, Color::Black).is_empty() {
+                if !self.state.query(Piece::Bishop, Color::Black).is_empty()
+                    || !self.state.query(Piece::Knight, Color::Black).is_empty()
+                {
                     self.result = Some(GameResult::Draw {
-                        reason: DrawReason::InsufficientMaterial
+                        reason: DrawReason::InsufficientMaterial,
                     })
                 }
             }
         } else if self.state.color_occupancy(Color::White).popcnt() == 2 {
             if self.state.color_occupancy(Color::Black).popcnt() == 2 {
-                if self.state.query(Piece::Bishop, Color::White).overlaps(BitBoard::WHITE_SQUARES) {
-                    if self.state.query(Piece::Bishop, Color::Black).overlaps(BitBoard::WHITE_SQUARES) {
+                if self
+                    .state
+                    .query(Piece::Bishop, Color::White)
+                    .overlaps(BitBoard::WHITE_SQUARES)
+                {
+                    if self
+                        .state
+                        .query(Piece::Bishop, Color::Black)
+                        .overlaps(BitBoard::WHITE_SQUARES)
+                    {
                         self.result = Some(GameResult::Draw {
-                            reason: DrawReason::InsufficientMaterial
+                            reason: DrawReason::InsufficientMaterial,
                         })
                     }
-                } else if self.state.query(Piece::Bishop, Color::White).overlaps(BitBoard::BLACK_SQUARES) {
-                    if self.state.query(Piece::Bishop, Color::Black).overlaps(BitBoard::BLACK_SQUARES) {
+                } else if self
+                    .state
+                    .query(Piece::Bishop, Color::White)
+                    .overlaps(BitBoard::BLACK_SQUARES)
+                {
+                    if self
+                        .state
+                        .query(Piece::Bishop, Color::Black)
+                        .overlaps(BitBoard::BLACK_SQUARES)
+                    {
                         self.result = Some(GameResult::Draw {
-                            reason: DrawReason::InsufficientMaterial
+                            reason: DrawReason::InsufficientMaterial,
                         })
                     }
                 }
             } else if self.state.color_occupancy(Color::Black).popcnt() == 1 {
-                if !self.state.query(Piece::Bishop, Color::White).is_empty() || !self.state.query(Piece::Knight, Color::White).is_empty() {
+                if !self.state.query(Piece::Bishop, Color::White).is_empty()
+                    || !self.state.query(Piece::Knight, Color::White).is_empty()
+                {
                     self.result = Some(GameResult::Draw {
-                        reason: DrawReason::InsufficientMaterial
+                        reason: DrawReason::InsufficientMaterial,
                     })
                 }
             }

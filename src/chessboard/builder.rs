@@ -4,21 +4,21 @@ use crate::{ChessBoard, ZobristHash};
 
 /// The [`BoardBuilder`] struct helps construct a [`ChessBoard`].
 pub struct BoardBuilder {
-    pub(super) piece_map: [Option<(Piece, Color)>;64],
-    pub(super) piece_bbs: [BitBoard;6],
-    pub(super) color_bbs: [BitBoard;2],
+    pub(super) piece_map: [Option<(Piece, Color)>; 64],
+    pub(super) piece_bbs: [BitBoard; 6],
+    pub(super) color_bbs: [BitBoard; 2],
     pub(super) turn: Option<Color>,
     pub(super) castling_rights: CastlingRights,
     pub(super) en_passant_square: Option<Square>,
-    pub(super) hash: ZobristHash
+    pub(super) hash: ZobristHash,
 }
 
 impl BoardBuilder {
     pub fn new() -> Self {
         Self {
-            piece_map: [None;64],
-            piece_bbs: [BitBoard::EMPTY;6],
-            color_bbs: [BitBoard::EMPTY;2],
+            piece_map: [None; 64],
+            piece_bbs: [BitBoard::EMPTY; 6],
+            color_bbs: [BitBoard::EMPTY; 2],
             turn: None,
             castling_rights: CastlingRights::new(),
             en_passant_square: None,
@@ -33,8 +33,16 @@ impl BoardBuilder {
             }
         } else if piece == Piece::Pawn {
             match color {
-                Color::White => if square.rank() == Rank::Eighth { return Err(()); },
-                Color::Black => if square.rank() == Rank::First { return Err(()); },
+                Color::White => {
+                    if square.rank() == Rank::Eighth {
+                        return Err(());
+                    }
+                }
+                Color::Black => {
+                    if square.rank() == Rank::First {
+                        return Err(());
+                    }
+                }
             }
         }
 

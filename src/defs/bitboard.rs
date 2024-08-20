@@ -17,12 +17,12 @@ impl BitBoard {
 
     /// A [`BitBoard`] with all the white squares stored.
     pub const WHITE_SQUARES: BitBoard = Self {
-        val: 0x55AA55AA55AA55AA
+        val: 0x55AA55AA55AA55AA,
     };
 
     /// A [`BitBoard`] with all the black squares stored.
     pub const BLACK_SQUARES: BitBoard = Self {
-        val: 0xAA55AA55AA55AA55
+        val: 0xAA55AA55AA55AA55,
     };
 
     /// Creates a new [`BitBoard`] containing only the given [`Square`].

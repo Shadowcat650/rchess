@@ -8,8 +8,9 @@ fn start_pos() {
 
 #[test]
 fn double_insert() {
-    let board = BoardBuilder::new().
-        piece(Square::A1, Piece::Rook, Color::Black).unwrap()
+    let board = BoardBuilder::new()
+        .piece(Square::A1, Piece::Rook, Color::Black)
+        .unwrap()
         .piece(Square::A1, Piece::Knight, Color::Black); // oops
     assert!(board.is_err());
 }
@@ -34,13 +35,15 @@ fn missing_turn() {
 
 #[test]
 fn bad_en_passant_sq() {
-    let board = ChessBoard::from_fen("rnbqkbnr/1ppppppp/p7/4P3/8/8/PPPP1PPP/RNBQKBNR w KQkq f6 0 1");
+    let board =
+        ChessBoard::from_fen("rnbqkbnr/1ppppppp/p7/4P3/8/8/PPPP1PPP/RNBQKBNR w KQkq f6 0 1");
     assert!(board.is_err());
 }
 
 #[test]
 fn incorrect_en_passant_sq() {
-    let board = ChessBoard::from_fen("rnbqkbnr/1pppp1pp/p7/4Pp2/8/8/PPPP1PPP/RNBQKBNR w KQkq f5 0 1");
+    let board =
+        ChessBoard::from_fen("rnbqkbnr/1pppp1pp/p7/4Pp2/8/8/PPPP1PPP/RNBQKBNR w KQkq f5 0 1");
     assert!(board.is_err());
 }
 
@@ -70,7 +73,8 @@ fn bad_bq_castle_right() {
 
 #[test]
 fn can_capture_king() {
-    let board = ChessBoard::from_fen("rnb1kbnr/1ppp1ppp/p3p3/8/6Pq/3P1P2/PPP1P2P/RNBQKBNR b KQkq - 0 1");
+    let board =
+        ChessBoard::from_fen("rnb1kbnr/1ppp1ppp/p3p3/8/6Pq/3P1P2/PPP1P2P/RNBQKBNR b KQkq - 0 1");
     assert!(board.is_err());
 }
 

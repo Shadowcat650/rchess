@@ -1,14 +1,14 @@
 use super::tables;
 use super::zobrist::ZobristHash;
+use crate::chessboard::builder::BoardBuilder;
+use crate::chessboard::castling_rights::CastlingRights;
 use crate::chessboard::tables::{
     get_bishop_attacks, get_knight_attacks, get_pawn_attacks, get_rook_attacks,
 };
 use crate::defs::*;
+use crate::MoveGen;
 use std::fmt::{Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
-use crate::chessboard::builder::BoardBuilder;
-use crate::chessboard::castling_rights::CastlingRights;
-use crate::MoveGen;
 
 /// The [`Move`] enum represents a move on a chess board.
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
@@ -162,7 +162,8 @@ impl ChessBoard {
 
         // Load fen castling rights.
         let fen_castling_rights = fen.next().ok_or(())?;
-        if fen_castling_rights == "-" {} else {
+        if fen_castling_rights == "-" {
+        } else {
             for c in fen_castling_rights.chars() {
                 match c {
                     'K' => builder = builder.castle_right(CastleSide::Kingside, Color::White)?,
@@ -204,46 +205,66 @@ impl ChessBoard {
                         return Err(());
                     }
 
-                    if Some((Piece::Pawn, Color::Black)) != board_builder.piece_map[sq.down().unwrap().index()] {
+                    if Some((Piece::Pawn, Color::Black))
+                        != board_builder.piece_map[sq.down().unwrap().index()]
+                    {
                         return Err(());
                     }
-                },
+                }
                 Color::Black => {
                     if sq.rank() != Rank::Third {
                         return Err(());
                     }
 
-                    if Some((Piece::Pawn, Color::White)) != board_builder.piece_map[sq.up().unwrap().index()] {
+                    if Some((Piece::Pawn, Color::White))
+                        != board_builder.piece_map[sq.up().unwrap().index()]
+                    {
                         return Err(());
                     }
-                },
+                }
             }
         }
 
-        if board_builder.castling_rights.is_set(CastleSide::Kingside, Color::White) {
-            if board_builder.piece_map[Square::E1.index()] != Some((Piece::King, Color::White))  ||
-                board_builder.piece_map[Square::H1.index()] != Some((Piece::Rook, Color::White)) {
+        if board_builder
+            .castling_rights
+            .is_set(CastleSide::Kingside, Color::White)
+        {
+            if board_builder.piece_map[Square::E1.index()] != Some((Piece::King, Color::White))
+                || board_builder.piece_map[Square::H1.index()] != Some((Piece::Rook, Color::White))
+            {
                 return Err(());
             }
         }
 
-        if board_builder.castling_rights.is_set(CastleSide::Queenside, Color::White) {
-            if board_builder.piece_map[Square::E1.index()] != Some((Piece::King, Color::White))  ||
-                board_builder.piece_map[Square::A1.index()] != Some((Piece::Rook, Color::White)) {
+        if board_builder
+            .castling_rights
+            .is_set(CastleSide::Queenside, Color::White)
+        {
+            if board_builder.piece_map[Square::E1.index()] != Some((Piece::King, Color::White))
+                || board_builder.piece_map[Square::A1.index()] != Some((Piece::Rook, Color::White))
+            {
                 return Err(());
             }
         }
 
-        if board_builder.castling_rights.is_set(CastleSide::Kingside, Color::Black) {
-            if board_builder.piece_map[Square::E8.index()] != Some((Piece::King, Color::Black))  ||
-                board_builder.piece_map[Square::H8.index()] != Some((Piece::Rook, Color::Black)) {
+        if board_builder
+            .castling_rights
+            .is_set(CastleSide::Kingside, Color::Black)
+        {
+            if board_builder.piece_map[Square::E8.index()] != Some((Piece::King, Color::Black))
+                || board_builder.piece_map[Square::H8.index()] != Some((Piece::Rook, Color::Black))
+            {
                 return Err(());
             }
         }
 
-        if board_builder.castling_rights.is_set(CastleSide::Kingside, Color::Black) {
-            if board_builder.piece_map[Square::E8.index()] != Some((Piece::King, Color::Black))  ||
-                board_builder.piece_map[Square::A8.index()] != Some((Piece::Rook, Color::Black)) {
+        if board_builder
+            .castling_rights
+            .is_set(CastleSide::Kingside, Color::Black)
+        {
+            if board_builder.piece_map[Square::E8.index()] != Some((Piece::King, Color::Black))
+                || board_builder.piece_map[Square::A8.index()] != Some((Piece::Rook, Color::Black))
+            {
                 return Err(());
             }
         }
@@ -260,7 +281,10 @@ impl ChessBoard {
             half_move_clock: 0,
         };
 
-        if chessboard.is_attacked(chessboard.get_king_square(!chessboard.turn), chessboard.turn) {
+        if chessboard.is_attacked(
+            chessboard.get_king_square(!chessboard.turn),
+            chessboard.turn,
+        ) {
             return Err(());
         }
 
@@ -600,19 +624,34 @@ impl ChessBoard {
 
         // Look for pawn checkers.
         let pawn_check_locations = get_pawn_attacks(square, us);
-        if self.query(Piece::Pawn, by).overlaps(pawn_check_locations) { return true; }
+        if self.query(Piece::Pawn, by).overlaps(pawn_check_locations) {
+            return true;
+        }
 
         // Look for knight checkers.
         let knight_check_locations = get_knight_attacks(square);
-        if self.query(Piece::Knight, by).overlaps(knight_check_locations) { return true; }
+        if self
+            .query(Piece::Knight, by)
+            .overlaps(knight_check_locations)
+        {
+            return true;
+        }
 
         // Look for bishop & queen checkers.
         let bishop_check_locations = get_bishop_attacks(square, self.occupancy());
-        if (self.query(Piece::Bishop, by) | self.query(Piece::Queen, by)).overlaps(bishop_check_locations) { return true; };
+        if (self.query(Piece::Bishop, by) | self.query(Piece::Queen, by))
+            .overlaps(bishop_check_locations)
+        {
+            return true;
+        };
 
         // Look for rook & queen checkers.
         let rook_check_locations = get_rook_attacks(square, self.occupancy());
-        if (self.query(Piece::Rook, by) | self.query(Piece::Queen, by)).overlaps(rook_check_locations) { return true; }
+        if (self.query(Piece::Rook, by) | self.query(Piece::Queen, by))
+            .overlaps(rook_check_locations)
+        {
+            return true;
+        }
 
         false
     }

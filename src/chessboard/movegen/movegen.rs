@@ -1,5 +1,5 @@
 use super::movelist::MoveList;
-use crate::chessboard::movegen::generator::generate_moves;
+use crate::chessboard::movegen::generator::{generate_moves, generate_square_legal};
 use crate::chessboard::{ChessBoard, Move};
 use crate::defs::*;
 use std::ops::Index;
@@ -71,9 +71,6 @@ impl<'a> MoveGen<'a> {
     }
 
     /// Classifies a move string and turns it into a [`Move`] for a [`ChessBoard`].
-    ///
-    /// # Warning
-    /// The move string that is being classified must be legal.
     #[inline]
     pub fn classify_move_str(str: &str, chessboard: &ChessBoard) -> Result<Move, ()> {
         // The move string is too short.
@@ -84,6 +81,12 @@ impl<'a> MoveGen<'a> {
         // Get move start & end squares.
         let start = Square::from_string(str.index(0..=1))?;
         let end = Square::from_string(str.index(2..=3))?;
+
+        // Make sure the move is legal.
+        let sq_legal_moves = generate_square_legal(chessboard, start);
+        if !sq_legal_moves.contains(end) {
+            return Err(());
+        }
 
         // Get extra board info.
         let us = chessboard.turn();
