@@ -89,3 +89,10 @@ fn pawn_on_last_b() {
     let board = ChessBoard::from_fen("4k3/8/8/8/8/8/8/4K1p1 b - - 0 1");
     assert!(board.is_err());
 }
+
+#[test]
+fn from_moves_err() {
+    let board =
+        ChessBoard::from_str_moves(&["e2e3", "d7d6", "e1e2", "c8g4", "g1f3", "g4h5", "f3e1"]);
+    assert!(board.is_err());
+}

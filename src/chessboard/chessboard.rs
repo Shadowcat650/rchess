@@ -1,7 +1,8 @@
 use super::tables;
 use super::zobrist::ZobristHash;
-use crate::chessboard::builder::BoardBuilder;
+use crate::chessboard::builder::{BoardBuilder, BoardBuilderError};
 use crate::chessboard::castling_rights::CastlingRights;
+use crate::chessboard::movegen::MoveClassificationError;
 use crate::chessboard::tables::{
     get_bishop_attacks, get_knight_attacks, get_pawn_attacks, get_rook_attacks,
 };
@@ -9,6 +10,7 @@ use crate::defs::*;
 use crate::MoveGen;
 use std::fmt::{Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
+use thiserror::Error;
 
 /// The [`Move`] enum represents a move on a chess board.
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
@@ -46,6 +48,69 @@ pub enum Move {
         end: Square,
         target: Piece,
     },
+}
+
+/// The [`BuilderConversionError`] enum is the error type for converting a [`BoardBuilder`] to a [`ChessBoard`].
+#[derive(Error, Debug, Copy, Clone, Eq, PartialEq)]
+pub enum BuilderConversionError {
+    #[error("the turn was not set")]
+    TurnNotSet,
+
+    #[error("at least one king was missing")]
+    MissingKing,
+
+    #[error("the en passant square was invalid")]
+    InvalidEnPassant,
+
+    #[error("a castling right was invalid")]
+    InvalidCastleRight,
+
+    #[error("the inactive king can be captured")]
+    InactiveKingAttacked,
+
+    #[error("more than 18 pieces were set for a given color")]
+    TooManyPieces,
+}
+
+/// The [`FenLoadError`] enum is the error type for loading a fen position.
+#[derive(Error, Debug, Copy, Clone, Eq, PartialEq)]
+pub enum FenLoadError {
+    #[error("there was an error with the fen formatting")]
+    Formatting(#[from] FenFormatError),
+
+    #[error("there was an error while building the board")]
+    Builder(#[from] BoardBuilderError),
+
+    #[error("there was an error while converting the board")]
+    Conversion(#[from] BuilderConversionError),
+}
+
+/// The [`FenFormatError`] enum is the error type for a fen's formatting.
+#[derive(Error, Debug, Copy, Clone, Eq, PartialEq)]
+pub enum FenFormatError {
+    #[error("the fen's piece section is invalid")]
+    InvalidPieceSection,
+
+    #[error("the fen piece section was missing")]
+    MissingPieceSection,
+
+    #[error("the fen's turn section is invalid")]
+    InvalidTurnSection,
+
+    #[error("the fen turn section was missing")]
+    MissingTurnSection,
+
+    #[error("the fen's castling rights section is invalid")]
+    InvalidCastleRights,
+
+    #[error("the fen castling rights section was missing")]
+    MissingCastleRights,
+
+    #[error("the fen's en passant section is invalid")]
+    InvalidEnPassant,
+
+    #[error("the fen en passant section was missing")]
+    MissingEnPassant,
 }
 
 /// The [`Footprint`] struct is used to identify a [`ChessBoard`] without lots of computed data.
@@ -105,7 +170,7 @@ impl ChessBoard {
 
     /// Creates a new [`ChessBoard`] with the given moves made on it.
     #[inline]
-    pub fn from_str_moves(moves: &[&str]) -> Result<Self, ()> {
+    pub fn from_str_moves(moves: &[&str]) -> Result<Self, MoveClassificationError> {
         let mut board = Self::new();
         for str_move in moves {
             let mv = MoveGen::classify_move_str(*str_move, &board)?;
@@ -116,7 +181,7 @@ impl ChessBoard {
 
     /// Attempts to create a new [`ChessBoard`] from the given fen string.
     #[inline]
-    pub fn from_fen(fen: &str) -> Result<Self, ()> {
+    pub fn from_fen(fen: &str) -> Result<Self, FenLoadError> {
         // Create a board builder.
         let mut builder = BoardBuilder::new();
 
@@ -125,7 +190,7 @@ impl ChessBoard {
 
         // Load fen piece positions.
         let mut square_idx = Square::A8.as_u8();
-        let fen_pieces = fen.next().ok_or(())?;
+        let fen_pieces = fen.next().ok_or(FenFormatError::MissingPieceSection)?;
         for c in fen_pieces.chars() {
             match c {
                 // Insert a piece.
@@ -136,7 +201,8 @@ impl ChessBoard {
                     } else {
                         Color::Black
                     };
-                    let square = Square::from_u8(square_idx).ok_or(())?;
+                    let square =
+                        Square::from_u8(square_idx).ok_or(FenFormatError::InvalidPieceSection)?;
                     builder = builder.piece(square, piece, color)?;
                     square_idx += 1;
                 }
@@ -148,20 +214,20 @@ impl ChessBoard {
                 // Move to the next line.
                 '/' => square_idx -= 16,
                 // Unrecognized character.
-                _ => return Err(()),
+                _ => return Err(FenFormatError::InvalidPieceSection.into()),
             }
         }
 
         // Load fen turn.
-        let fen_turn = fen.next().ok_or(())?;
+        let fen_turn = fen.next().ok_or(FenFormatError::MissingTurnSection)?;
         match fen_turn {
             "w" => builder = builder.turn(Color::White)?,
             "b" => builder = builder.turn(Color::Black)?,
-            _ => return Err(()),
+            _ => return Err(FenFormatError::InvalidTurnSection.into()),
         }
 
         // Load fen castling rights.
-        let fen_castling_rights = fen.next().ok_or(())?;
+        let fen_castling_rights = fen.next().ok_or(FenFormatError::MissingCastleRights)?;
         if fen_castling_rights == "-" {
         } else {
             for c in fen_castling_rights.chars() {
@@ -170,56 +236,64 @@ impl ChessBoard {
                     'Q' => builder = builder.castle_right(CastleSide::Queenside, Color::White)?,
                     'k' => builder = builder.castle_right(CastleSide::Kingside, Color::Black)?,
                     'q' => builder = builder.castle_right(CastleSide::Queenside, Color::Black)?,
-                    _ => return Err(()),
+                    _ => return Err(FenFormatError::InvalidCastleRights.into()),
                 }
             }
         }
 
         // Load fen en passant square.
-        let fen_en_passant = fen.next().ok_or(())?;
+        let fen_en_passant = fen.next().ok_or(FenFormatError::MissingEnPassant)?;
         if let Ok(square) = Square::from_string(fen_en_passant) {
             builder = builder.en_passant(square)?;
         } else if fen_en_passant != "-" {
-            return Err(());
+            return Err(FenFormatError::InvalidEnPassant.into());
         }
 
-        Self::from_builder(builder)
+        Ok(Self::from_builder(builder)?)
     }
 
     /// Creates a new [`ChessBoard`] from the given [`BoardBuilder`].
-    pub fn from_builder(board_builder: BoardBuilder) -> Result<Self, ()> {
+    pub fn from_builder(board_builder: BoardBuilder) -> Result<Self, BuilderConversionError> {
+        if board_builder.color_bbs[Color::White.index()].popcnt() > 18 {
+            return Err(BuilderConversionError::TooManyPieces);
+        }
+
+        if board_builder.color_bbs[Color::Black.index()].popcnt() > 18 {
+            return Err(BuilderConversionError::TooManyPieces);
+        }
+
         if board_builder.turn.is_none() {
-            return Err(());
+            return Err(BuilderConversionError::TurnNotSet);
         }
 
         let turn = board_builder.turn.unwrap();
 
         if board_builder.piece_bbs[Piece::King.index()].popcnt() != 2 {
-            return Err(());
+            return Err(BuilderConversionError::MissingKing);
         }
 
         if let Some(sq) = board_builder.en_passant_square {
             match turn {
                 Color::White => {
                     if sq.rank() != Rank::Sixth {
-                        return Err(());
+                        return Err(BuilderConversionError::InvalidEnPassant);
                     }
 
                     if Some((Piece::Pawn, Color::Black))
                         != board_builder.piece_map[sq.down().unwrap().index()]
                     {
-                        return Err(());
+                        return Err(BuilderConversionError::InvalidEnPassant);
                     }
                 }
                 Color::Black => {
                     if sq.rank() != Rank::Third {
-                        return Err(());
+                        return Err(BuilderConversionError::InvalidEnPassant);
                     }
 
                     if Some((Piece::Pawn, Color::White))
                         != board_builder.piece_map[sq.up().unwrap().index()]
                     {
-                        return Err(());
+                        return Err(BuilderConversionError::InvalidEnPassant);
                     }
                 }
             }
@@ -232,7 +306,7 @@ impl ChessBoard {
             if board_builder.piece_map[Square::E1.index()] != Some((Piece::King, Color::White))
                 || board_builder.piece_map[Square::H1.index()] != Some((Piece::Rook, Color::White))
             {
-                return Err(());
+                return Err(BuilderConversionError::InvalidCastleRight);
             }
         }
 
@@ -243,7 +317,7 @@ impl ChessBoard {
             if board_builder.piece_map[Square::E1.index()] != Some((Piece::King, Color::White))
                 || board_builder.piece_map[Square::A1.index()] != Some((Piece::Rook, Color::White))
             {
-                return Err(());
+                return Err(BuilderConversionError::InvalidCastleRight);
             }
         }
 
@@ -254,7 +328,7 @@ impl ChessBoard {
             if board_builder.piece_map[Square::E8.index()] != Some((Piece::King, Color::Black))
                 || board_builder.piece_map[Square::H8.index()] != Some((Piece::Rook, Color::Black))
             {
-                return Err(());
+                return Err(BuilderConversionError::InvalidCastleRight);
             }
         }
 
@@ -265,7 +339,7 @@ impl ChessBoard {
             if board_builder.piece_map[Square::E8.index()] != Some((Piece::King, Color::Black))
                 || board_builder.piece_map[Square::A8.index()] != Some((Piece::Rook, Color::Black))
             {
-                return Err(());
+                return Err(BuilderConversionError::InvalidCastleRight);
             }
         }
 
@@ -285,7 +359,7 @@ impl ChessBoard {
             chessboard.get_king_square(!chessboard.turn),
             chessboard.turn,
         ) {
-            return Err(());
+            return Err(BuilderConversionError::InactiveKingAttacked);
         }
 
         chessboard.calculate_extra_data();

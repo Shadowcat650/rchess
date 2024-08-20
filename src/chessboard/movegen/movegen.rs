@@ -2,7 +2,19 @@ use super::movelist::MoveList;
 use crate::chessboard::movegen::generator::{generate_moves, generate_square_legal};
 use crate::chessboard::{ChessBoard, Move};
 use crate::defs::*;
+use crate::{BoardBuilder, BoardBuilderError};
 use std::ops::Index;
+use thiserror::Error;
+
+/// The [`MoveClassificationError`] enum is the error type produced when classifying moves.
+#[derive(Error, Debug, Copy, Clone, Eq, PartialEq)]
+pub enum MoveClassificationError {
+    #[error("the move was not formatted correctly")]
+    InvalidMove,
+
+    #[error("the move was illegal")]
+    IllegalMove,
+}
 
 /// Generates moves for a [`ChessBoard`].
 pub struct MoveGen<'a> {
@@ -72,20 +84,25 @@ impl<'a> MoveGen<'a> {
 
     /// Classifies a move string and turns it into a [`Move`] for a [`ChessBoard`].
     #[inline]
-    pub fn classify_move_str(str: &str, chessboard: &ChessBoard) -> Result<Move, ()> {
+    pub fn classify_move_str(
+        str: &str,
+        chessboard: &ChessBoard,
+    ) -> Result<Move, MoveClassificationError> {
         // The move string is too short.
         if str.len() < 4 {
-            return Err(());
+            return Err(MoveClassificationError::InvalidMove);
         }
 
         // Get move start & end squares.
-        let start = Square::from_string(str.index(0..=1))?;
-        let end = Square::from_string(str.index(2..=3))?;
+        let start =
+            Square::from_string(str.index(0..=1)).or(Err(MoveClassificationError::InvalidMove))?;
+        let end =
+            Square::from_string(str.index(2..=3)).or(Err(MoveClassificationError::InvalidMove))?;
 
         // Make sure the move is legal.
         let sq_legal_moves = generate_square_legal(chessboard, start);
         if !sq_legal_moves.contains(end) {
-            return Err(());
+            return Err(MoveClassificationError::IllegalMove);
         }
 
         // Get extra board info.
@@ -110,12 +127,17 @@ impl<'a> MoveGen<'a> {
             }
             // Look for promotion.
             else if end.rank() == promote_rank {
-                let target = match *str.as_bytes().get(4).ok_or(())? as char {
+                let target = match *str
+                    .as_bytes()
+                    .get(4)
+                    .ok_or(MoveClassificationError::InvalidMove)?
+                    as char
+                {
                     'n' => Piece::Knight,
                     'b' => Piece::Bishop,
                     'r' => Piece::Rook,
                     'q' => Piece::Queen,
-                    _ => return Err(()),
+                    _ => return Err(MoveClassificationError::InvalidMove),
                 };
 
                 // Look for captures.

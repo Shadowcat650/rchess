@@ -31,3 +31,4 @@ fastrand = "2.1.0"
 criterion = "0.5.1"
 
 [dependencies]
+thiserror = "1.0.63"
