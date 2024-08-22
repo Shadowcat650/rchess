@@ -12,7 +12,7 @@ pub const FILES: [File; 8] = [
     File::H,
 ];
 
-/// A file on the chessboard.
+/// The [`File`] enum represents a file of the chessboard.
 #[repr(u8)]
 #[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Debug)]
 pub enum File {

@@ -1,6 +1,6 @@
 use std::ops::Not;
 
-/// Represents the color of a chess piece.
+/// The [`Color`] enum represents the color of a chess piece.
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum Color {
     White,

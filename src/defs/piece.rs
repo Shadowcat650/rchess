@@ -1,4 +1,4 @@
-/// Represents a piece on the chess board.
+/// The [`Piece`] enum represents a chess piece.
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum Piece {
     Pawn,

@@ -19,7 +19,7 @@ pub enum StrMoveCreationError {
 #[error("the move was illegal")]
 pub struct MoveCreationError;
 
-/// Generates moves for a [`ChessBoard`].
+/// The [`MoveGen`] struct generates moves for a [`ChessBoard`].
 pub struct MoveGen<'a> {
     chessboard: &'a ChessBoard,
     moves: MoveList,

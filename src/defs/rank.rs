@@ -1,4 +1,4 @@
-use super::Square;
+use super::{File, Square};
 
 /// All the ranks in order.
 pub const RANKS: [Rank; 8] = [
@@ -12,7 +12,7 @@ pub const RANKS: [Rank; 8] = [
     Rank::Eighth,
 ];
 
-/// A rank on the chess board.
+/// The [`Rank`] enum represents a rank of the chessboard.
 #[repr(u8)]
 #[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Debug)]
 pub enum Rank {

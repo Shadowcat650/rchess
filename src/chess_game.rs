@@ -1,11 +1,6 @@
 use crate::chessboard::Footprint;
-use crate::defs::START_FEN;
-use crate::{
-    BitBoard, ChessBoard, Color, Move, MoveCreationError, MoveGen, Piece, Square,
-    StrMoveCreationError, ZobristHash,
-};
+use crate::{BitBoard, ChessBoard, Color, FenLoadError, Move, MoveCreationError, MoveGen, Piece, Square, StrMoveCreationError};
 use std::collections::HashMap;
-use std::ops::Index;
 
 /// The [`GameResult`] enum represents the result of a chess game.
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
@@ -46,24 +41,47 @@ pub struct ChessGame {
 }
 
 impl ChessGame {
-    /// Creates a new `[ChessGame`] with the board in the starting position.
+    /// Creates a new [`ChessGame`] with the board in the starting position.
     #[inline]
     pub fn new() -> Self {
         let state = ChessBoard::new();
+        Self::initialize_game(state)
+    }
+
+    /// Creates a new [`ChessGame`] with the board in the given fen position.
+    #[inline]
+    pub fn from_fen(fen: &str) -> Result<Self, FenLoadError> {
+        let state = ChessBoard::from_fen(fen)?;
+        Ok(Self::initialize_game(state))
+    }
+
+    /// Initializes a new [`ChessGame`].
+    fn initialize_game(state: ChessBoard) -> Self {
+        // Get the position moves.
         let position_moves = MoveGen::legal(&state).to_vec();
 
         // Initialize repetition history.
         let mut history = HashMap::new();
         history.insert(state.footprint(), 1);
 
-        Self {
+        // Create the game object.
+        let start_fen = state.get_fen();
+        let mut game = Self {
             state,
             position_moves,
             history,
-            start_fen: START_FEN.to_string(),
+            start_fen,
             made_moves: vec![],
             result: None,
+        };
+
+        // Look for terminal state.
+        game.look_for_terminal();
+        if game.result.is_some() {
+            game.position_moves.clear();
         }
+
+        game
     }
 
     /// Gets a list of possible moves for the active color to make.
@@ -74,7 +92,11 @@ impl ChessGame {
 
     /// Makes a move.
     #[inline]
-    pub fn make_move(&mut self, mv: Move) {
+    pub fn make_move(&mut self, mv: Move) -> Result<(), ()> {
+        if self.result.is_some() {
+            return Err(());
+        }
+
         self.state.make_move(mv);
         self.made_moves.push(mv);
 
@@ -91,7 +113,8 @@ impl ChessGame {
             if *count == 3 {
                 self.result = Some(GameResult::Draw {
                     reason: DrawReason::ThreefoldRepetition,
-                })
+                });
+                return Ok(());
             }
         } else {
             self.history.insert(self.state.footprint(), 1);
@@ -99,6 +122,16 @@ impl ChessGame {
 
         self.position_moves = MoveGen::legal(&self.state).to_vec();
 
+        self.look_for_terminal();
+        if self.result.is_some() {
+            return Ok(());
+        }
+
+        Ok(())
+    }
+
+    /// Looks for a terminal state that is not a repetition.
+    fn look_for_terminal(&mut self) {
         // Look for checkmate/stalemate.
         if self.position_moves.is_empty() {
             if self.state.checkers().is_empty() {
@@ -177,15 +210,12 @@ impl ChessGame {
         }
     }
 
-    /// Gets the result of the game, if any.
-    #[inline]
-    pub fn result(&self) -> Option<GameResult> {
-        self.result
-    }
-
     /// Returns `true` if the start and end squares make a legal move.
     #[inline]
     pub fn is_legal_move(&self, start: Square, end: Square) -> bool {
+        if self.result.is_some() {
+            return false;
+        }
         MoveGen::is_legal(&self.state, start, end)
     }
 
@@ -194,6 +224,9 @@ impl ChessGame {
     /// Promotions default to a queen promotion.
     #[inline]
     pub fn create_move(&self, start: Square, end: Square) -> Result<Move, MoveCreationError> {
+        if self.result().is_some() {
+            return Err(MoveCreationError);
+        }
         MoveGen::create_move(&self.state, start, end)
     }
 
@@ -207,12 +240,18 @@ impl ChessGame {
         end: Square,
         target: Piece,
     ) -> Result<Move, MoveCreationError> {
+        if self.result().is_some() {
+            return Err(MoveCreationError);
+        }
         MoveGen::create_promotion_move(&self.state, start, end, target)
     }
 
     /// Attempts to convert a string in algebraic chess notation, into a [`Move`].
     #[inline]
     pub fn create_str_move(&self, str: &str) -> Result<Move, StrMoveCreationError> {
+        if self.result().is_some() {
+            return Err(StrMoveCreationError::IllegalMove(MoveCreationError));
+        }
         MoveGen::create_str_move(&self.state, str)
     }
 
@@ -220,5 +259,17 @@ impl ChessGame {
     #[inline]
     pub fn board(&self) -> &ChessBoard {
         &self.state
+    }
+
+    /// Gets a reference to all the moves made in the [`ChessGame`].
+    #[inline]
+    pub fn made_moves(&self) -> &Vec<Move> {
+        &self.made_moves
+    }
+
+    /// Gets the result of the [`ChessGame`], if any.
+    #[inline]
+    pub fn result(&self) -> Option<GameResult> {
+        self.result
     }
 }
