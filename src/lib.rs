@@ -6,7 +6,7 @@ pub use chess_game::{ChessGame, DrawReason, GameResult};
 
 pub use chessboard::{
     BoardBuilder, BoardBuilderError, BuilderConversionError, ChessBoard, FenFormatError,
-    FenLoadError, Move, MoveClassificationError, MoveGen, ZobristHash,
+    FenLoadError, Move, MoveCreationError, MoveGen, StrMoveCreationError, ZobristHash,
 };
 
 pub use defs::{

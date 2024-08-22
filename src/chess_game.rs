@@ -1,6 +1,9 @@
 use crate::chessboard::Footprint;
 use crate::defs::START_FEN;
-use crate::{BitBoard, ChessBoard, Color, Move, MoveGen, Piece, Square, ZobristHash};
+use crate::{
+    BitBoard, ChessBoard, Color, Move, MoveCreationError, MoveGen, Piece, Square,
+    StrMoveCreationError, ZobristHash,
+};
 use std::collections::HashMap;
 use std::ops::Index;
 
@@ -172,36 +175,25 @@ impl ChessGame {
         self.result
     }
 
-    pub fn is_legal_move(&self, start_sq: Square, end_sq: Square) -> bool {
-        self.create_move(start_sq, end_sq).is_ok()
+    pub fn is_legal_move(&self, start: Square, end: Square) -> bool {
+        MoveGen::is_legal(&self.state, start, end)
     }
 
-    pub fn create_move(&self, start_sq: Square, end_sq: Square) -> Result<Move, ()> {
-        if let Some(mv) = self.position_moves.iter().find(|mv| match *mv {
-            Move::Quiet { start, end, .. }
-            | Move::Capture { start, end, .. }
-            | Move::Castle { start, end, .. }
-            | Move::DoublePawnPush { start, end, .. }
-            | Move::EnPassant { start, end, .. }
-            | Move::Promote { start, end, .. }
-            | Move::PromoteCapture { start, end, .. } => *start == start_sq && *end == end_sq,
-        }) {
-            Ok(*mv)
-        } else {
-            Err(())
-        }
+    pub fn create_move(&self, start: Square, end: Square) -> Result<Move, MoveCreationError> {
+        MoveGen::create_move(&self.state, start, end)
     }
 
-    pub fn create_str_move(&self, str: &str) -> Result<Move, ()> {
-        if str.len() < 4 {
-            return Err(());
-        }
+    pub fn create_promote_move(
+        &self,
+        start: Square,
+        end: Square,
+        target: Piece,
+    ) -> Result<Move, MoveCreationError> {
+        MoveGen::create_promotion_move(&self.state, start, end, target)
+    }
 
-        // Get move start & end squares.
-        let start = Square::from_string(str.index(0..=1))?;
-        let end = Square::from_string(str.index(2..=3))?;
-
-        self.create_move(start, end)
+    pub fn create_str_move(&self, str: &str) -> Result<Move, StrMoveCreationError> {
+        MoveGen::create_str_move(&self.state, str)
     }
 
     pub fn board(&self) -> &ChessBoard {

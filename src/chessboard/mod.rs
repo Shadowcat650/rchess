@@ -9,5 +9,5 @@ pub use builder::{BoardBuilder, BoardBuilderError};
 pub use chessboard::{
     BuilderConversionError, ChessBoard, FenFormatError, FenLoadError, Footprint, Move,
 };
-pub use movegen::{MoveClassificationError, MoveGen};
+pub use movegen::{MoveCreationError, MoveGen, StrMoveCreationError};
 pub use zobrist::ZobristHash;

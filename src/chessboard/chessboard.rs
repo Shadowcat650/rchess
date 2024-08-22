@@ -2,12 +2,11 @@ use super::tables;
 use super::zobrist::ZobristHash;
 use crate::chessboard::builder::{BoardBuilder, BoardBuilderError};
 use crate::chessboard::castling_rights::CastlingRights;
-use crate::chessboard::movegen::MoveClassificationError;
 use crate::chessboard::tables::{
     get_bishop_attacks, get_knight_attacks, get_pawn_attacks, get_rook_attacks,
 };
 use crate::defs::*;
-use crate::MoveGen;
+use crate::{MoveGen, StrMoveCreationError};
 use std::fmt::{Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
 use thiserror::Error;
@@ -170,10 +169,10 @@ impl ChessBoard {
 
     /// Creates a new [`ChessBoard`] with the given moves made on it.
     #[inline]
-    pub fn from_str_moves(moves: &[&str]) -> Result<Self, MoveClassificationError> {
+    pub fn from_str_moves(moves: &[&str]) -> Result<Self, StrMoveCreationError> {
         let mut board = Self::new();
         for str_move in moves {
-            let mv = MoveGen::classify_move_str(*str_move, &board)?;
+            let mv = MoveGen::create_str_move(&board, *str_move)?;
             board.make_move(mv);
         }
         Ok(board)

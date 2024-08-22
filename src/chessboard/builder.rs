@@ -27,6 +27,7 @@ pub enum BoardBuilderError {
 }
 
 /// The [`BoardBuilder`] struct helps construct a [`ChessBoard`].
+#[derive(Clone, Eq, PartialEq, Debug)]
 pub struct BoardBuilder {
     pub(super) piece_map: [Option<(Piece, Color)>; 64],
     pub(super) piece_bbs: [BitBoard; 6],

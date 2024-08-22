@@ -2,19 +2,22 @@ use super::movelist::MoveList;
 use crate::chessboard::movegen::generator::{generate_moves, generate_square_legal};
 use crate::chessboard::{ChessBoard, Move};
 use crate::defs::*;
-use crate::{BoardBuilder, BoardBuilderError};
 use std::ops::Index;
 use thiserror::Error;
 
-/// The [`MoveClassificationError`] enum is the error type produced when classifying moves.
+/// The [`StrMoveCreationError`] enum is the error type produced when classifying moves.
 #[derive(Error, Debug, Copy, Clone, Eq, PartialEq)]
-pub enum MoveClassificationError {
+pub enum StrMoveCreationError {
     #[error("the move was not formatted correctly")]
     InvalidMove,
 
     #[error("the move was illegal")]
-    IllegalMove,
+    IllegalMove(#[from] MoveCreationError),
 }
+
+#[derive(Error, Debug, Copy, Clone, Eq, PartialEq)]
+#[error("the move was illegal")]
+pub struct MoveCreationError;
 
 /// Generates moves for a [`ChessBoard`].
 pub struct MoveGen<'a> {
@@ -82,29 +85,96 @@ impl<'a> MoveGen<'a> {
         self.moves.count_moves(self.chessboard)
     }
 
+    /// Checks if a move with a given start and end square is legal for a chess board.
+    pub fn is_legal(chessboard: &ChessBoard, start: Square, end: Square) -> bool {
+        let sq_legal_moves = generate_square_legal(chessboard, start);
+        sq_legal_moves.contains(end)
+    }
+
+    /// Attempts to create a [`Move`] from a start and end square.
+    ///
+    /// If the move is a promotion, it promotes to a queen.
+    ///
+    /// If the move is illegal, a [`MoveCreationError`] is returned.
+    pub fn create_move(
+        chessboard: &ChessBoard,
+        start: Square,
+        end: Square,
+    ) -> Result<Move, MoveCreationError> {
+        Self::create_promotion_move(chessboard, start, end, Piece::Queen)
+    }
+
     /// Classifies a move string and turns it into a [`Move`] for a [`ChessBoard`].
     #[inline]
-    pub fn classify_move_str(
-        str: &str,
+    pub fn create_str_move(
         chessboard: &ChessBoard,
-    ) -> Result<Move, MoveClassificationError> {
+        str: &str,
+    ) -> Result<Move, StrMoveCreationError> {
         // The move string is too short.
         if str.len() < 4 {
-            return Err(MoveClassificationError::InvalidMove);
+            return Err(StrMoveCreationError::InvalidMove);
         }
 
         // Get move start & end squares.
         let start =
-            Square::from_string(str.index(0..=1)).or(Err(MoveClassificationError::InvalidMove))?;
+            Square::from_string(str.index(0..=1)).or(Err(StrMoveCreationError::InvalidMove))?;
         let end =
-            Square::from_string(str.index(2..=3)).or(Err(MoveClassificationError::InvalidMove))?;
+            Square::from_string(str.index(2..=3)).or(Err(StrMoveCreationError::InvalidMove))?;
 
-        // Make sure the move is legal.
-        let sq_legal_moves = generate_square_legal(chessboard, start);
-        if !sq_legal_moves.contains(end) {
-            return Err(MoveClassificationError::IllegalMove);
+        if str.len() == 5 {
+            let target = match *str
+                .as_bytes()
+                .get(4)
+                .ok_or(StrMoveCreationError::InvalidMove)? as char
+            {
+                'n' => Piece::Knight,
+                'b' => Piece::Bishop,
+                'r' => Piece::Rook,
+                'q' => Piece::Queen,
+                _ => return Err(StrMoveCreationError::InvalidMove),
+            };
+            Ok(Self::create_promotion_move(chessboard, start, end, target)?)
+        } else {
+            Ok(Self::create_move(chessboard, start, end)?)
         }
+    }
 
+    /// Attempts to create a [`Move`] from a start and end square.
+    ///
+    /// The move does not have to be a promotion, the `target` is what piece a pawn will promote to
+    /// if there happens to be a promotion.
+    ///
+    /// If the move is illegal, a [`MoveCreationError`] is returned.
+    pub fn create_promotion_move(
+        chessboard: &ChessBoard,
+        start: Square,
+        end: Square,
+        target: Piece,
+    ) -> Result<Move, MoveCreationError> {
+        // Make sure the move is legal.
+        if !Self::is_legal(chessboard, start, end) {
+            return Err(MoveCreationError);
+        }
+        unsafe {
+            Ok(Self::create_promotion_move_unchecked(
+                chessboard, start, end, target,
+            ))
+        }
+    }
+
+    /// Creates a [`Move`] from a start and end square.
+    ///
+    /// The move does not have to be a promotion, the `target` is what piece a pawn will promote to
+    /// if there happens to be a promotion.
+    ///
+    /// # Safety
+    /// Caller ensures the start and end squares produce a legal move.
+    pub unsafe fn create_promotion_move_unchecked(
+        chessboard: &ChessBoard,
+        start: Square,
+        end: Square,
+        target: Piece,
+    ) -> Move {
         // Get extra board info.
         let us = chessboard.turn();
         let them = !chessboard.turn();
@@ -116,38 +186,22 @@ impl<'a> MoveGen<'a> {
                 Color::White => (Rank::Second, Rank::Fourth, Rank::Eighth),
                 Color::Black => (Rank::Seventh, Rank::Fifth, Rank::First),
             };
-
             // Look for double pawn push.
             if start.rank() == start_rank && end.rank() == double_rank {
-                return Ok(Move::DoublePawnPush { start, end });
+                return Move::DoublePawnPush { start, end };
             }
             // Look for en passant.
             else if chessboard.en_passant_sq().is_some_and(|sq| sq == end) {
-                return Ok(Move::EnPassant { start, end });
+                return Move::EnPassant { start, end };
             }
             // Look for promotion.
             else if end.rank() == promote_rank {
-                let target = match *str
-                    .as_bytes()
-                    .get(4)
-                    .ok_or(MoveClassificationError::InvalidMove)?
-                    as char
-                {
-                    'n' => Piece::Knight,
-                    'b' => Piece::Bishop,
-                    'r' => Piece::Rook,
-                    'q' => Piece::Queen,
-                    _ => return Err(MoveClassificationError::InvalidMove),
-                };
-
                 // Look for captures.
-                return Ok(
-                    if end.bitboard().overlaps(chessboard.color_occupancy(them)) {
-                        Move::PromoteCapture { start, end, target }
-                    } else {
-                        Move::Promote { start, end, target }
-                    },
-                );
+                return if end.bitboard().overlaps(chessboard.color_occupancy(them)) {
+                    Move::PromoteCapture { start, end, target }
+                } else {
+                    Move::Promote { start, end, target }
+                };
             }
         }
         // Look for castles.
@@ -156,30 +210,27 @@ impl<'a> MoveGen<'a> {
                 Color::White => (Square::E1, Square::G1, Square::C1),
                 Color::Black => (Square::E8, Square::G8, Square::C8),
             };
-
             if start == castle_start && end == ks_end {
-                return Ok(Move::Castle {
+                return Move::Castle {
                     start,
                     end,
                     side: CastleSide::Kingside,
-                });
+                };
             } else if start == castle_start && end == qs_end {
-                return Ok(Move::Castle {
+                return Move::Castle {
                     start,
                     end,
                     side: CastleSide::Queenside,
-                });
+                };
             }
         }
 
         // Look for captures.
-        Ok(
-            if end.bitboard().overlaps(chessboard.color_occupancy(them)) {
-                Move::Capture { start, end, moving }
-            } else {
-                Move::Quiet { start, end, moving }
-            },
-        )
+        if end.bitboard().overlaps(chessboard.color_occupancy(them)) {
+            Move::Capture { start, end, moving }
+        } else {
+            Move::Quiet { start, end, moving }
+        }
     }
 
     /// Runs a debug perft on a given [`ChessBoard`], where the nodes for each move are printed.
@@ -247,9 +298,7 @@ impl Iterator for MoveGen<'_> {
         let end = self.moves.back().unwrap().targets.b_scan_forward().unwrap();
 
         // Get data about the chess board.
-        let us = self.chessboard.turn();
         let them = !self.chessboard.turn();
-        let (moving, _) = self.chessboard.piece_at(start).unwrap();
 
         // Handle promotion variations.
         if let Some(promote_status) = &self.promote_status {
@@ -281,86 +330,21 @@ impl Iterator for MoveGen<'_> {
                 },
             );
         }
-        // Look for special pawn moves
-        else if moving == Piece::Pawn {
-            let (start_rank, double_rank, promote_rank) = match us {
-                Color::White => (Rank::Second, Rank::Fourth, Rank::Eighth),
-                Color::Black => (Rank::Seventh, Rank::Fifth, Rank::First),
-            };
 
-            // Look for double pawn push.
-            if start.rank() == start_rank && end.rank() == double_rank {
-                self.moves.back_mut().unwrap().targets ^= end.bitboard();
-                return Some(Move::DoublePawnPush { start, end });
-            }
-            // Look for en passant.
-            else if self.chessboard.en_passant_sq().is_some_and(|sq| sq == end) {
-                self.moves.back_mut().unwrap().targets ^= end.bitboard();
-                return Some(Move::EnPassant { start, end });
-            }
-            // Look for promotion.
-            else if end.rank() == promote_rank {
-                self.promote_status = Some(PromoteStatus::PromoteBishop);
+        // SAFETY: The movegen only contains legal moves.
+        let mv = unsafe {
+            Self::create_promotion_move_unchecked(self.chessboard, start, end, Piece::Knight)
+        };
 
-                // Look for captures.
-                return Some(
-                    if end
-                        .bitboard()
-                        .overlaps(self.chessboard.color_occupancy(them))
-                    {
-                        Move::PromoteCapture {
-                            start,
-                            end,
-                            target: Piece::Knight,
-                        }
-                    } else {
-                        Move::Promote {
-                            start,
-                            end,
-                            target: Piece::Knight,
-                        }
-                    },
-                );
-            }
-        }
-        // Look for castles.
-        else if moving == Piece::King {
-            let (castle_start, ks_end, qs_end) = match us {
-                Color::White => (Square::E1, Square::G1, Square::C1),
-                Color::Black => (Square::E8, Square::G8, Square::C8),
-            };
-
-            if start == castle_start && end == ks_end {
-                self.moves.back_mut().unwrap().targets ^= end.bitboard();
-                return Some(Move::Castle {
-                    start,
-                    end,
-                    side: CastleSide::Kingside,
-                });
-            } else if start == castle_start && end == qs_end {
-                self.moves.back_mut().unwrap().targets ^= end.bitboard();
-                return Some(Move::Castle {
-                    start,
-                    end,
-                    side: CastleSide::Queenside,
-                });
-            }
+        // Handle promotion sequence.
+        if let Move::Promote { .. } | Move::PromoteCapture { .. } = &mv {
+            self.promote_status = Some(PromoteStatus::PromoteBishop);
+        } else {
+            // Remove the end square from targets.
+            self.moves.back_mut().unwrap().targets ^= end.bitboard();
         }
 
-        // Remove the end square from targets.
-        self.moves.back_mut().unwrap().targets ^= end.bitboard();
-
-        // Look for captures.
-        Some(
-            if end
-                .bitboard()
-                .overlaps(self.chessboard.color_occupancy(them))
-            {
-                Move::Capture { start, end, moving }
-            } else {
-                Move::Quiet { start, end, moving }
-            },
-        )
+        Some(mv)
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
