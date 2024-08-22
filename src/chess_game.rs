@@ -84,12 +84,6 @@ impl ChessGame {
         game
     }
 
-    /// Gets a list of possible moves for the active color to make.
-    #[inline]
-    pub fn moves(&self) -> &Vec<Move> {
-        &self.position_moves
-    }
-
     /// Makes a move.
     #[inline]
     pub fn make_move(&mut self, mv: Move) -> Result<(), ()> {
@@ -271,5 +265,11 @@ impl ChessGame {
     #[inline]
     pub fn result(&self) -> Option<GameResult> {
         self.result
+    }
+
+    /// Gets a list of possible moves for the active color to make.
+    #[inline]
+    pub fn moves(&self) -> &Vec<Move> {
+        &self.position_moves
     }
 }
