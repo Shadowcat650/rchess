@@ -86,6 +86,7 @@ impl<'a> MoveGen<'a> {
     }
 
     /// Checks if a move with a given start and end square is legal for a chess board.
+    #[inline]
     pub fn is_legal(chessboard: &ChessBoard, start: Square, end: Square) -> bool {
         let sq_legal_moves = generate_square_legal(chessboard, start);
         sq_legal_moves.contains(end)
@@ -96,6 +97,7 @@ impl<'a> MoveGen<'a> {
     /// If the move is a promotion, it promotes to a queen.
     ///
     /// If the move is illegal, a [`MoveCreationError`] is returned.
+    #[inline]
     pub fn create_move(
         chessboard: &ChessBoard,
         start: Square,
@@ -145,6 +147,7 @@ impl<'a> MoveGen<'a> {
     /// if there happens to be a promotion.
     ///
     /// If the move is illegal, a [`MoveCreationError`] is returned.
+    #[inline]
     pub fn create_promotion_move(
         chessboard: &ChessBoard,
         start: Square,
@@ -169,6 +172,7 @@ impl<'a> MoveGen<'a> {
     ///
     /// # Safety
     /// Caller ensures the start and end squares produce a legal move.
+    #[inline]
     pub unsafe fn create_promotion_move_unchecked(
         chessboard: &ChessBoard,
         start: Square,

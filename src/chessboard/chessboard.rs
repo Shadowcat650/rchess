@@ -252,6 +252,7 @@ impl ChessBoard {
     }
 
     /// Creates a new [`ChessBoard`] from the given [`BoardBuilder`].
+    #[inline]
     pub fn from_builder(board_builder: BoardBuilder) -> Result<Self, BuilderConversionError> {
         if board_builder.color_bbs[Color::White.index()].popcnt() > 18 {
             return Err(BuilderConversionError::TooManyPieces);

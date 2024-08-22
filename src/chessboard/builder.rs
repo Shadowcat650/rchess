@@ -39,6 +39,8 @@ pub struct BoardBuilder {
 }
 
 impl BoardBuilder {
+    /// Creates a new [`BoardBuilder`] object.
+    #[inline]
     pub fn new() -> Self {
         Self {
             piece_map: [None; 64],
@@ -51,6 +53,8 @@ impl BoardBuilder {
         }
     }
 
+    /// Adds a piece to the [`BoardBuilder`].
+    #[inline]
     pub fn piece(
         mut self,
         square: Square,
@@ -88,6 +92,8 @@ impl BoardBuilder {
         Ok(self)
     }
 
+    /// Sets the turn.
+    #[inline]
     pub fn turn(mut self, color: Color) -> Result<Self, BoardBuilderError> {
         if self.turn.is_some() {
             return Err(BoardBuilderError::TurnAlreadySet);
@@ -101,6 +107,8 @@ impl BoardBuilder {
         Ok(self)
     }
 
+    /// Adds a castling right.
+    #[inline]
     pub fn castle_right(
         mut self,
         side: CastleSide,
@@ -116,6 +124,8 @@ impl BoardBuilder {
         Ok(self)
     }
 
+    /// Sets the en passant square.
+    #[inline]
     pub fn en_passant(mut self, square: Square) -> Result<Self, BoardBuilderError> {
         if self.en_passant_square.is_some() {
             return Err(BoardBuilderError::EnPassantAlreadySet);
@@ -127,6 +137,8 @@ impl BoardBuilder {
         Ok(self)
     }
 
+    /// Converts the [`BoardBuilder`] into a [`ChessBoard`].
+    #[inline]
     pub fn finish(self) -> Result<ChessBoard, BuilderConversionError> {
         ChessBoard::from_builder(self)
     }

@@ -46,6 +46,8 @@ pub struct ChessGame {
 }
 
 impl ChessGame {
+    /// Creates a new `[ChessGame`] with the board in the starting position.
+    #[inline]
     pub fn new() -> Self {
         let state = ChessBoard::new();
         let position_moves = MoveGen::legal(&state).to_vec();
@@ -64,10 +66,14 @@ impl ChessGame {
         }
     }
 
+    /// Gets a list of possible moves for the active color to make.
+    #[inline]
     pub fn moves(&self) -> &Vec<Move> {
         &self.position_moves
     }
 
+    /// Makes a move.
+    #[inline]
     pub fn make_move(&mut self, mv: Move) {
         self.state.make_move(mv);
         self.made_moves.push(mv);
@@ -171,18 +177,30 @@ impl ChessGame {
         }
     }
 
+    /// Gets the result of the game, if any.
+    #[inline]
     pub fn result(&self) -> Option<GameResult> {
         self.result
     }
 
+    /// Returns `true` if the start and end squares make a legal move.
+    #[inline]
     pub fn is_legal_move(&self, start: Square, end: Square) -> bool {
         MoveGen::is_legal(&self.state, start, end)
     }
 
+    /// Attempts to turn a start and end square into a [`Move`].
+    ///
+    /// Promotions default to a queen promotion.
+    #[inline]
     pub fn create_move(&self, start: Square, end: Square) -> Result<Move, MoveCreationError> {
         MoveGen::create_move(&self.state, start, end)
     }
 
+    /// Attempts to turn a start and end square into a [`Move`].
+    ///
+    /// The promotion target is set, but the move is ot necessarily a promotion.
+    #[inline]
     pub fn create_promote_move(
         &self,
         start: Square,
@@ -192,10 +210,14 @@ impl ChessGame {
         MoveGen::create_promotion_move(&self.state, start, end, target)
     }
 
+    /// Attempts to convert a string in algebraic chess notation, into a [`Move`].
+    #[inline]
     pub fn create_str_move(&self, str: &str) -> Result<Move, StrMoveCreationError> {
         MoveGen::create_str_move(&self.state, str)
     }
 
+    /// Gets s reference to the underlying [`ChessBoard`].
+    #[inline]
     pub fn board(&self) -> &ChessBoard {
         &self.state
     }
