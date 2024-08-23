@@ -1,4 +1,4 @@
-use rchess::{ChessGame, Color, DrawReason, GameResult, Rank, Square};
+use rchess::{ChessGame, Color, DrawReason, GameResult, Square};
 
 #[test]
 fn repetition() {
@@ -126,6 +126,71 @@ fn insufficient_material() {
         game.result(),
         Some(GameResult::Draw {
             reason: DrawReason::InsufficientMaterial
+        })
+    );
+}
+
+#[test]
+fn fifty_moves() {
+    let mut game = ChessGame::from_fen("1R4r1/8/8/8/8/8/8/K6k w - -").unwrap();
+    let mut w_rook_sq = Square::B8;
+    let mut b_rook_sq = Square::G8;
+
+    // 4 back & forths.
+    for _ in 0..4 {
+        // 12 moves to get down.
+        for _ in 0..12 {
+            let rook_sq = match game.board().turn() {
+                Color::White => &mut w_rook_sq,
+                Color::Black => &mut b_rook_sq
+            };
+
+            let start = *rook_sq;
+            let end = start.down().unwrap();
+            *rook_sq = end;
+
+            let mv = game.create_move(start, end).unwrap();
+            game.make_move(mv).unwrap();
+        }
+
+        // 12 moves to get up.
+        for _ in 0..12 {
+            let rook_sq = match game.board().turn() {
+                Color::White => &mut w_rook_sq,
+                Color::Black => &mut b_rook_sq
+            };
+
+            let start = *rook_sq;
+            let end = start.up().unwrap();
+            *rook_sq = end;
+
+            let mv = game.create_move(start, end).unwrap();
+            game.make_move(mv).unwrap();
+        }
+
+        // Move rook over.
+        let (start, end) = match game.board().turn() {
+            Color::White => {
+                let start = w_rook_sq;
+                let end = w_rook_sq.right().unwrap();
+                w_rook_sq = end;
+                (start, end)
+            }
+            Color::Black => {
+                let start = b_rook_sq;
+                let end = b_rook_sq.left().unwrap();
+                b_rook_sq = end;
+                (start, end)
+            }
+        };
+
+        let mv = game.create_move(start, end).unwrap();
+        game.make_move(mv).unwrap();
+    }
+    assert_eq!(
+        game.result(),
+        Some(GameResult::Draw {
+            reason: DrawReason::FiftyMoves
         })
     );
 }

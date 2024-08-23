@@ -65,7 +65,6 @@ impl ChessGame {
         history.insert(state.footprint(), 1);
 
         // Create the game object.
-        let start_fen = state.get_fen();
         let mut game = Self {
             state,
             position_moves,
@@ -151,7 +150,7 @@ impl ChessGame {
         }
 
         // Look for 50 move rule.
-        if self.state.halfmoves() >= 50 {
+        if self.state.halfmoves() >= 100 {
             self.result = Some(GameResult::Draw {
                 reason: DrawReason::FiftyMoves,
             })
