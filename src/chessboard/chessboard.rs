@@ -541,6 +541,8 @@ impl ChessBoard {
                         }
                         _ => (),
                     }
+                } else if moving == Piece::Pawn {
+                    reset_halfmoves = true;
                 }
 
                 self.move_piece(start, end, moving, us);
@@ -640,6 +642,8 @@ impl ChessBoard {
 
                 // Insert the promoted piece.
                 self.insert(end, target, us);
+
+                reset_halfmoves = true;
             }
             Move::PromoteCapture { start, end, target } => {
                 // Remove captured rook castling rights.
