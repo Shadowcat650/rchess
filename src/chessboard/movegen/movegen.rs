@@ -53,7 +53,7 @@ impl<'a> MoveGen<'a> {
     /// ```
     #[inline]
     pub fn legal(chessboard: &'a ChessBoard) -> Self {
-        let mut moves = generate_moves::<false>(chessboard);
+        let moves = generate_moves::<false>(chessboard);
 
         MoveGen {
             chessboard,
@@ -80,7 +80,7 @@ impl<'a> MoveGen<'a> {
     /// ```
     #[inline]
     pub fn captures_only(chessboard: &'a ChessBoard) -> Self {
-        let mut moves = generate_moves::<true>(chessboard);
+        let moves = generate_moves::<true>(chessboard);
 
         MoveGen {
             chessboard,
@@ -142,7 +142,7 @@ impl<'a> MoveGen<'a> {
     /// ```
     #[inline]
     pub fn count_legal_moves(chessboard: &ChessBoard) -> u32 {
-        let mut moves = generate_moves::<false>(chessboard);
+        let moves = generate_moves::<false>(chessboard);
         moves.count_moves(chessboard)
     }
 

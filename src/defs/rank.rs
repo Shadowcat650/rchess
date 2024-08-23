@@ -1,4 +1,4 @@
-use super::{File, Square};
+use super::{Square};
 
 /// All the ranks in order.
 pub const RANKS: [Rank; 8] = [

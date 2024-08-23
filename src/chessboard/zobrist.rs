@@ -1,5 +1,5 @@
-use crate::defs::*;
 use super::ChessBoard;
+use crate::defs::*;
 
 include!(concat!(env!("OUT_DIR"), "/zobrist.rs"));
 

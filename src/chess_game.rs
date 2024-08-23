@@ -1,5 +1,8 @@
 use crate::chessboard::Footprint;
-use crate::{BitBoard, ChessBoard, Color, FenLoadError, Move, MoveCreationError, MoveGen, Piece, Square, StrMoveCreationError};
+use crate::{
+    BitBoard, ChessBoard, Color, FenLoadError, Move, MoveCreationError, MoveGen, Piece, Square,
+    StrMoveCreationError,
+};
 use std::collections::HashMap;
 
 /// The [`GameResult`] enum represents the result of a chess game.
@@ -29,9 +32,6 @@ pub struct ChessGame {
 
     /// The reversible move history (for 3-fold repetition checking).
     history: HashMap<Footprint, u8>,
-
-    /// The starting fen of the chess game.
-    start_fen: String,
 
     /// The moves made in the game.
     made_moves: Vec<Move>,
@@ -70,7 +70,6 @@ impl ChessGame {
             state,
             position_moves,
             history,
-            start_fen,
             made_moves: vec![],
             result: None,
         };
