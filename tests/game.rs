@@ -74,3 +74,11 @@ fn kn_v_kn() {
     let game = ChessGame::from_fen("7k/8/n7/N7/8/8/8/K7 w - -").unwrap();
     assert!(game.result().is_none());
 }
+
+#[test]
+fn insufficient_material() {
+    let mut game = ChessGame::from_fen("3k4/PK6/8/8/8/8/8/8 w - -").unwrap();
+    let mv = game.create_str_move("a7a8n").unwrap();
+    game.make_move(mv).unwrap();
+    assert_eq!(game.result(), Some(GameResult::Draw { reason: DrawReason::InsufficientMaterial }));
+}

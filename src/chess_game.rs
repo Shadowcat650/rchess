@@ -85,6 +85,20 @@ impl ChessGame {
     }
 
     /// Makes a move.
+    ///
+    /// If the game is over, an `Err` is returned.
+    ///
+    /// # Examples
+    /// ```
+    /// use rchess::ChessGame;
+    ///
+    /// // Create a new chess game
+    /// let mut game = ChessGame::new();
+    ///
+    /// // Make a move in the chess game.
+    /// let mv = game.moves()[0];
+    /// game.make_move(mv).unwrap();
+    /// ```
     #[inline]
     pub fn make_move(&mut self, mv: Move) -> Result<(), ()> {
         if self.result.is_some() {
@@ -205,6 +219,16 @@ impl ChessGame {
     }
 
     /// Returns `true` if the start and end squares make a legal move.
+    ///
+    /// # Examples
+    /// ```
+    /// use rchess::{ChessGame, Square};
+    ///
+    /// // Create a new chess game.
+    /// let game = ChessGame::new();
+    /// assert!(game.is_legal_move(Square::E2, Square::E4));
+    /// assert!(!game.is_legal_move(Square::E2, Square::E5));
+    /// ```
     #[inline]
     pub fn is_legal_move(&self, start: Square, end: Square) -> bool {
         if self.result.is_some() {
@@ -216,6 +240,18 @@ impl ChessGame {
     /// Attempts to turn a start and end square into a [`Move`].
     ///
     /// Promotions default to a queen promotion.
+    ///
+    /// # Examples
+    /// ```
+    /// use rchess::{ChessGame, Move, Square};
+    ///
+    /// // Create a new chess game.
+    /// let game = ChessGame::new();
+    ///
+    /// // Create the move "e2e4".
+    /// let mv = game.create_move(Square::E2, Square::E4).unwrap();
+    /// assert_eq!(mv, Move::DoublePawnPush { start: Square::E2, end: Square::E4 });
+    /// ```
     #[inline]
     pub fn create_move(&self, start: Square, end: Square) -> Result<Move, MoveCreationError> {
         if self.result().is_some() {
@@ -227,6 +263,22 @@ impl ChessGame {
     /// Attempts to turn a start and end square into a [`Move`].
     ///
     /// The promotion target is set, but the move is ot necessarily a promotion.
+    ///
+    /// # Examples
+    /// ```
+    /// use rchess::{ChessGame, Move, Piece, Square};
+    ///
+    /// // Create a new chess game.
+    /// let game = ChessGame::from_fen("3k4/PK6/8/8/8/8/8/8 w - -").unwrap();
+    ///
+    /// // Promote to a knight.
+    /// let mv = game.create_promote_move(Square::A7, Square::A8, Piece::Knight).unwrap();
+    /// assert_eq!(mv, Move::Promote { start: Square::A7, end: Square::A8, target: Piece::Knight });
+    ///
+    /// // Make a normal non-promotion move.
+    /// let mv = game.create_promote_move(Square::B7, Square::B8, Piece::Knight).unwrap();
+    /// assert_eq!(mv, Move::Quiet { start: Square::B7, end: Square::B8, moving: Piece::King });
+    /// ```
     #[inline]
     pub fn create_promote_move(
         &self,
@@ -241,6 +293,18 @@ impl ChessGame {
     }
 
     /// Attempts to convert a string in algebraic chess notation, into a [`Move`].
+    ///
+    /// # Examples
+    /// ```
+    /// use rchess::{ChessGame, Move, Square};
+    ///
+    /// // Create a new chess game.
+    /// let game = ChessGame::new();
+    ///
+    /// // Create the move "e2e4".
+    /// let mv = game.create_str_move("e2e4").unwrap();
+    /// assert_eq!(mv, Move::DoublePawnPush { start: Square::E2, end: Square::E4 });
+    /// ```
     #[inline]
     pub fn create_str_move(&self, str: &str) -> Result<Move, StrMoveCreationError> {
         if self.result().is_some() {
