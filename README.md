@@ -9,10 +9,10 @@ A Chess Library Written In Rust
 RChess is a chess library designed to be used for applications that need to access chess games and or chess boards. For
 example, a UCI GUI or an online chess game application.
 
-Note: RChess is still in early development with many features planned. The API may change.
+Note: RChess is still under development with many features planned. The API may change.
 
 If you find any bugs, or have any suggestions that will make the code easier to read or faster, please feel free create 
-a pull request, or and issue. 
+a pull request. 
 
 For big API changes or new features, please create an issue in the github issues tab.
 

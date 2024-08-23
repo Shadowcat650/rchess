@@ -337,3 +337,10 @@ impl ChessGame {
         &self.position_moves
     }
 }
+
+impl Default for ChessGame {
+    /// The default for a [`ChessGame`] is a chess game in the starting position.
+    fn default() -> Self {
+        Self::new()
+    }
+}

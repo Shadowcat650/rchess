@@ -1062,3 +1062,10 @@ impl Display for Move {
         }
     }
 }
+
+impl Default for ChessBoard {
+    /// The default [`Chessboard`] is a chess board in the starting position.
+    fn default() -> Self {
+        Self::new()
+    }
+}
