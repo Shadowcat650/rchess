@@ -1,4 +1,5 @@
 use rchess::{BoardBuilder, ChessBoard, Color, Piece, Square};
+use rchess::File::C;
 
 #[test]
 fn start_pos() {
@@ -75,6 +76,12 @@ fn bad_bq_castle_right() {
 fn can_capture_king() {
     let board =
         ChessBoard::from_fen("rnb1kbnr/1ppp1ppp/p3p3/8/6Pq/3P1P2/PPP1P2P/RNBQKBNR b KQkq - 0 1");
+    assert!(board.is_err());
+}
+
+#[test]
+fn touching_kings() {
+    let board = ChessBoard::from_fen("8/8/4k3/3K4/8/8/8/8 w - -");
     assert!(board.is_err());
 }
 

@@ -2,9 +2,7 @@ use super::tables;
 use super::zobrist::ZobristHash;
 use crate::chessboard::builder::{BoardBuilder, BoardBuilderError};
 use crate::chessboard::castling_rights::CastlingRights;
-use crate::chessboard::tables::{
-    get_bishop_attacks, get_knight_attacks, get_pawn_attacks, get_rook_attacks,
-};
+use crate::chessboard::tables::{get_bishop_attacks, get_king_attacks, get_knight_attacks, get_pawn_attacks, get_rook_attacks};
 use crate::defs::*;
 use crate::{MoveGen, StrMoveCreationError};
 use std::fmt::{Debug, Display, Formatter};
@@ -777,6 +775,15 @@ impl ChessBoard {
         if self
             .query(Piece::Knight, by)
             .overlaps(knight_check_locations)
+        {
+            return true;
+        }
+
+        // Look for king checkers.
+        let king_check_locations = get_king_attacks(square);
+        if self
+            .query(Piece::King, by)
+            .overlaps(king_check_locations)
         {
             return true;
         }
