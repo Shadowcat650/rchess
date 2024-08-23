@@ -1,4 +1,4 @@
-use rchess::{ChessGame, DrawReason, GameResult};
+use rchess::{ChessGame, Color, DrawReason, GameResult, Rank, Square};
 
 #[test]
 fn repetition() {

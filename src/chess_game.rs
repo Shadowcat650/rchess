@@ -130,9 +130,6 @@ impl ChessGame {
         self.position_moves = MoveGen::legal(&self.state).to_vec();
 
         self.look_for_terminal();
-        if self.result.is_some() {
-            return Ok(());
-        }
 
         Ok(())
     }
