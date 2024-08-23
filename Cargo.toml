@@ -2,6 +2,12 @@
 name = "rchess"
 version = "0.0.1"
 edition = "2021"
+license = "MIT"
+description = "A Chess Library Written In Rust"
+repository = "" # TODO
+readme = "README.md"
+keywords = ["chess", "board", "chessboard"]
+categories = ["data-structures"]
 build = "src/build.rs"
 
 [[bench]]
