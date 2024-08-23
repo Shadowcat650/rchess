@@ -5,7 +5,7 @@ use crate::defs::*;
 use std::ops::Index;
 use thiserror::Error;
 
-/// The [`StrMoveCreationError`] enum is the error type produced when classifying moves.
+/// The [`StrMoveCreationError`] enum is the error type produced when creating moves.
 #[derive(Error, Debug, Copy, Clone, Eq, PartialEq)]
 pub enum StrMoveCreationError {
     #[error("the move was not formatted correctly")]
@@ -15,6 +15,7 @@ pub enum StrMoveCreationError {
     IllegalMove(#[from] MoveCreationError),
 }
 
+/// The [`MoveCreationError`] struct signifies that there was an error while crating a move.
 #[derive(Error, Debug, Copy, Clone, Eq, PartialEq)]
 #[error("the move was illegal")]
 pub struct MoveCreationError;
@@ -35,6 +36,21 @@ enum PromoteStatus {
 
 impl<'a> MoveGen<'a> {
     /// Creates a new [`MoveGen`] that generates all legal moves.
+    ///
+    /// # Examples
+    /// ```
+    /// use rchess::{ChessBoard, MoveGen};
+    ///
+    /// // Create a new chess board.
+    /// let board = ChessBoard::new();
+    ///
+    /// // Get all the legal moves for the chess board.
+    /// let moves = MoveGen::legal(&board);
+    ///
+    /// // Get all children of the chess board.
+    /// let children = moves.into_iter().map(|mv| board.get_child(mv)).collect::<Vec<_>>();
+    /// assert_eq!(children.len(), 20);
+    /// ```
     #[inline]
     pub fn legal(chessboard: &'a ChessBoard) -> Self {
         let mut moves = generate_moves::<false>(chessboard);
@@ -47,6 +63,21 @@ impl<'a> MoveGen<'a> {
     }
 
     /// Creates a new [`MoveGen`] that generates only capture moves and king-defending moves.
+    ///
+    /// # Examples
+    /// ```
+    /// use rchess::{ChessBoard, MoveGen};
+    ///
+    /// // Create a chess board.
+    /// let board = ChessBoard::from_fen("4k3/6pp/8/8/8/8/8/4K1nR w - -").unwrap();
+    ///
+    /// // Get all capture moves for the chess board.
+    /// let moves = MoveGen::captures_only(&board);
+    ///
+    /// // Get all children of the chess board.
+    /// let children = moves.into_iter().map(|mv| board.get_child(mv)).collect::<Vec<_>>();
+    /// assert_eq!(children.len(), 2);
+    /// ```
     #[inline]
     pub fn captures_only(chessboard: &'a ChessBoard) -> Self {
         let mut moves = generate_moves::<true>(chessboard);
@@ -59,6 +90,18 @@ impl<'a> MoveGen<'a> {
     }
 
     /// Turns the [`MoveGen`] into a [`Vec<Move>`].
+    ///
+    /// # Examples
+    /// ```
+    /// use rchess::{ChessBoard, MoveGen};
+    ///
+    /// // Create a new chess board.
+    /// let board = ChessBoard::new();
+    ///
+    /// // Get a vec of legal moves for the chess board.
+    /// let move_vec = MoveGen::legal(&board).to_vec();
+    /// assert_eq!(move_vec.len(), 20);
+    /// ```
     #[inline]
     pub fn to_vec(self) -> Vec<Move> {
         let mut vec = Vec::with_capacity(self.count_moves() as usize);
@@ -67,12 +110,36 @@ impl<'a> MoveGen<'a> {
     }
 
     /// Returns `true` if no moves can be made on the [`ChessBoard`].
+    ///
+    /// # Examples
+    /// ```
+    /// use rchess::{ChessBoard, MoveGen};
+    ///
+    /// // Create a chess board in stalemate.
+    /// let board = ChessBoard::from_fen("1r5k/8/8/8/8/8/7r/K7 w - -").unwrap();
+    ///
+    /// // Generate legal moves for the position.
+    /// let moves = MoveGen::legal(&board);
+    /// assert!(moves.is_empty());
+    /// ```
     #[inline]
     pub fn is_empty(&self) -> bool {
         self.moves.is_empty()
     }
 
     /// Counts the number of legal moves for a given [`ChessBoard`].
+    ///
+    /// # Examples
+    /// ```
+    /// use rchess::{ChessBoard, MoveGen};
+    ///
+    /// // Create a new chess board.
+    /// let board = ChessBoard::new();
+    ///
+    /// // Get the number of legal moves for the chess board.
+    /// let n_moves = MoveGen::count_legal_moves(&board);
+    /// assert_eq!(n_moves, 20);
+    /// ```
     #[inline]
     pub fn count_legal_moves(chessboard: &ChessBoard) -> u32 {
         let mut moves = generate_moves::<false>(chessboard);
@@ -80,12 +147,38 @@ impl<'a> MoveGen<'a> {
     }
 
     /// Counts the number of moves left in the [`MoveGen`].
+    ///
+    /// # Examples
+    /// ```
+    /// use rchess::{ChessBoard, MoveGen};
+    ///
+    /// // Create a new chess board.
+    /// let board = ChessBoard::new();
+    ///
+    /// // Get the legal moves for the chess board.
+    /// let moves = MoveGen::legal(&board);
+    /// assert_eq!(moves.count_moves(), 20);
+    /// ```
     #[inline]
     pub fn count_moves(&self) -> u32 {
         self.moves.count_moves(self.chessboard)
     }
 
     /// Checks if a move with a given start and end square is legal for a chess board.
+    ///
+    /// # Examples
+    /// ```
+    /// use rchess::{ChessBoard, MoveGen, Square};
+    ///
+    /// // Create a new chess board.
+    /// let board = ChessBoard::new();
+    ///
+    /// // Check if the move "e2e4" is legal.
+    /// assert!(MoveGen::is_legal(&board, Square::E2, Square::E4));
+    ///
+    /// // Check if the move "e1e2" is legal.
+    /// assert!(!MoveGen::is_legal(&board, Square::E1, Square::E2));
+    /// ```
     #[inline]
     pub fn is_legal(chessboard: &ChessBoard, start: Square, end: Square) -> bool {
         let sq_legal_moves = generate_square_legal(chessboard, start);
@@ -97,6 +190,22 @@ impl<'a> MoveGen<'a> {
     /// If the move is a promotion, it promotes to a queen.
     ///
     /// If the move is illegal, a [`MoveCreationError`] is returned.
+    ///
+    /// # Examples
+    /// ```
+    /// use rchess::{ChessBoard, MoveGen, Square};
+    ///
+    /// // Create a new chess board.
+    /// let board = ChessBoard::new();
+    ///
+    /// // Create the move "e2e4"
+    /// let mv = MoveGen::create_move(&board, Square::E2, Square::E4);
+    /// assert!(mv.is_ok());
+    ///
+    /// // Create the move "e1e2"
+    /// let mv = MoveGen::create_move(&board, Square::E1, Square::E2);
+    /// assert!(mv.is_err());
+    /// ```
     #[inline]
     pub fn create_move(
         chessboard: &ChessBoard,
@@ -106,7 +215,23 @@ impl<'a> MoveGen<'a> {
         Self::create_promotion_move(chessboard, start, end, Piece::Queen)
     }
 
-    /// Classifies a move string and turns it into a [`Move`] for a [`ChessBoard`].
+    /// Creates a [`Move`] from a given [`&str`] for the given [`ChessBoard`].
+    ///
+    /// # Examples
+    /// ```
+    /// use rchess::{ChessBoard, MoveGen};
+    ///
+    /// // Create a new chess board.
+    /// let board = ChessBoard::new();
+    ///
+    /// // Create the move "e2e4"
+    /// let mv = MoveGen::create_str_move(&board, "e2e4");
+    /// assert!(mv.is_ok());
+    ///
+    /// // Create the move "e1e2"
+    /// let mv = MoveGen::create_str_move(&board, "e1e2");
+    /// assert!(mv.is_err());
+    /// ```
     #[inline]
     pub fn create_str_move(
         chessboard: &ChessBoard,
@@ -147,6 +272,22 @@ impl<'a> MoveGen<'a> {
     /// if there happens to be a promotion.
     ///
     /// If the move is illegal, a [`MoveCreationError`] is returned.
+    ///
+    /// # Examples
+    /// ```
+    /// use rchess::{ChessBoard, Move, MoveGen, Piece, Square};
+    ///
+    /// // Create a new chess board.
+    /// let board = ChessBoard::from_fen("k7/3Q1P2/8/8/8/8/8/K7 w - -").unwrap();
+    ///
+    /// // Promote pawn to a rook instead of a queen.
+    /// let mv = MoveGen::create_promotion_move(&board, Square::F7, Square::F8, Piece::Rook).unwrap();
+    /// assert_eq!(mv, Move::Promote { start: Square::F7, end: Square::F8, target: Piece::Rook });
+    ///
+    /// // The move might not be a promotion.
+    /// let mv = MoveGen::create_promotion_move(&board, Square::D7, Square::E7, Piece::Rook).unwrap();
+    /// assert_eq!(mv, Move::Quiet { start: Square::D7, end: Square::E7, moving: Piece::Queen });
+    /// ```
     #[inline]
     pub fn create_promotion_move(
         chessboard: &ChessBoard,
@@ -172,6 +313,21 @@ impl<'a> MoveGen<'a> {
     ///
     /// # Safety
     /// Caller ensures the start and end squares produce a legal move.
+    ///
+    /// # Examples
+    /// ```
+    /// use rchess::{ChessBoard, Move, MoveGen, Piece, Square};
+    ///
+    /// // Create a chess board.
+    /// let board = ChessBoard::new();
+    ///
+    /// // Make sure the move is legal.
+    /// assert!(MoveGen::is_legal(&board, Square::E2, Square::E4));
+    ///
+    /// // Make the move. // SAFETY: The move is legal.
+    /// let mv = unsafe { MoveGen::create_promotion_move_unchecked(&board, Square::E2, Square::E4, Piece::Queen)};
+    /// assert_eq!(mv, Move::DoublePawnPush { start: Square::E2, end: Square::E4 });
+    /// ```
     #[inline]
     pub unsafe fn create_promotion_move_unchecked(
         chessboard: &ChessBoard,
@@ -242,7 +398,7 @@ impl<'a> MoveGen<'a> {
     pub fn debug_perft(chessboard: ChessBoard, depth: u8) {
         let movegen = MoveGen::legal(&chessboard);
 
-        let mut total_nodes: u64 = 0;
+        let mut total_nodes = 0;
         for mv in movegen {
             let mut child_board = chessboard.clone();
             child_board.make_move(mv);
@@ -257,13 +413,25 @@ impl<'a> MoveGen<'a> {
     }
 
     /// Runs a perft on a given [`ChessBoard`].
+    ///
+    /// # Examples
+    /// ```
+    /// use rchess::{ChessBoard, MoveGen};
+    ///
+    /// // Create a new chess board.
+    /// let board = ChessBoard::new();
+    ///
+    /// // Run a perft to depth 3.
+    /// let res = MoveGen::perft(board, 3);
+    /// assert_eq!(res, 8902);
+    /// ```
     #[inline]
-    pub fn perft(chessboard: ChessBoard, depth: u8) -> u64 {
+    pub fn perft(chessboard: ChessBoard, depth: u8) -> u32 {
         if depth == 0 {
             return 1;
         }
         if depth == 1 {
-            return Self::count_legal_moves(&chessboard) as u64;
+            return Self::count_legal_moves(&chessboard);
         }
 
         let movegen = MoveGen::legal(&chessboard);
@@ -280,10 +448,25 @@ impl<'a> MoveGen<'a> {
     }
 }
 
+/// The [`MoveGen`] struct can iterate through all generated moves.
 impl Iterator for MoveGen<'_> {
     type Item = Move;
 
     /// Gets the next move in the [`MoveGen`].
+    ///
+    /// # Examples
+    /// ```no_run
+    /// use rchess::{MoveGen, ChessBoard};
+    ///
+    /// // Create a new chess board.
+    /// let board = ChessBoard::new();
+    ///
+    /// // Generate moves for the chess board.
+    /// let mut moves = MoveGen::legal(&board);
+    ///
+    /// // Get the next move.
+    /// let mv = moves.next().unwrap();
+    /// ```
     fn next(&mut self) -> Option<Self::Item> {
         // Make sure there are moves to generate.
         if self.moves.is_empty() {
