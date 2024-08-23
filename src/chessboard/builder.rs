@@ -54,6 +54,16 @@ impl BoardBuilder {
     }
 
     /// Adds a piece to the [`BoardBuilder`].
+    ///
+    /// # Examples
+    /// ```
+    /// use rchess::{BoardBuilder, Color, Piece, Square};
+    ///
+    /// // Create a new board builder with two kings.
+    /// let builder = BoardBuilder::new()
+    ///     .piece(Square::A1, Piece::King, Color::White).unwrap()
+    ///     .piece(Square::H8, Piece::King, Color::Black).unwrap();
+    /// ```
     #[inline]
     pub fn piece(
         mut self,
@@ -92,7 +102,16 @@ impl BoardBuilder {
         Ok(self)
     }
 
-    /// Sets the turn.
+    /// Sets the turn of the [`BoardBuilder`].
+    ///
+    /// # Examples
+    /// ```
+    /// use rchess::{BoardBuilder, Color};
+    ///
+    /// // Create a board builder with the turn set to black.
+    /// let builder = BoardBuilder::new()
+    ///     .turn(Color::Black).unwrap();
+    /// ```
     #[inline]
     pub fn turn(mut self, color: Color) -> Result<Self, BoardBuilderError> {
         if self.turn.is_some() {
@@ -107,7 +126,19 @@ impl BoardBuilder {
         Ok(self)
     }
 
-    /// Adds a castling right.
+    /// Adds a castling right to the [`BoardBuilder`].
+    ///
+    /// # Examples
+    /// ```
+    /// use rchess::{BoardBuilder, CastleSide, Color};
+    ///
+    /// // Create a board builder all castling rights.
+    /// let builder = BoardBuilder::new()
+    ///     .castle_right(CastleSide::Kingside, Color::White).unwrap()
+    ///     .castle_right(CastleSide::Queenside, Color::White).unwrap()
+    ///     .castle_right(CastleSide::Kingside, Color::Black).unwrap()
+    ///     .castle_right(CastleSide::Queenside, Color::Black).unwrap();
+    /// ```
     #[inline]
     pub fn castle_right(
         mut self,
@@ -124,7 +155,16 @@ impl BoardBuilder {
         Ok(self)
     }
 
-    /// Sets the en passant square.
+    /// Sets the en passant square of the [`BoardBuilder`].
+    ///
+    /// # Examples
+    /// ```
+    /// use rchess::{BoardBuilder,Square};
+    ///
+    /// // Create a board builder with an en passant square set.
+    /// let builder = BoardBuilder::new()
+    ///     .en_passant(Square::E3).unwrap();
+    /// ```
     #[inline]
     pub fn en_passant(mut self, square: Square) -> Result<Self, BoardBuilderError> {
         if self.en_passant_square.is_some() {
@@ -138,6 +178,18 @@ impl BoardBuilder {
     }
 
     /// Converts the [`BoardBuilder`] into a [`ChessBoard`].
+    ///
+    /// # Examples
+    /// ```no_run
+    /// use rchess::{BoardBuilder, Color, Piece, Square};
+    ///
+    /// // Create a new chess board with two kings with black to move.
+    /// let builder = BoardBuilder::new()
+    ///     .piece(Square::A1, Piece::King, Color::White).unwrap()
+    ///     .piece(Square::H8, Piece::King, Color::Black).unwrap()
+    ///     .turn(Color::Black).unwrap()
+    ///     .finish().unwrap();
+    /// ```
     #[inline]
     pub fn finish(self) -> Result<ChessBoard, BuilderConversionError> {
         ChessBoard::from_builder(self)
