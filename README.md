@@ -17,6 +17,8 @@ If you encounter any bugs, have suggestions for improving code readability or pe
 
 ## Getting Started
 
+Documentation for **RChess** can be found [here](https://docs.rs/rchess/1.0.1/rchess/).
+
 ### Installation
 
 Add the following to your `Cargo.toml`:
