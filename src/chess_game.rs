@@ -308,7 +308,7 @@ impl ChessGame {
         MoveGen::create_str_move(&self.state, str)
     }
 
-    /// Gets s reference to the underlying [`ChessBoard`].
+    /// Gets a reference to the underlying [`ChessBoard`].
     #[inline]
     pub fn board(&self) -> &ChessBoard {
         &self.state
