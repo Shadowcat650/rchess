@@ -1,24 +1,32 @@
+
+---
+
 # RChess
 
----
-
-A Chess Library Written In Rust
+A Chess Library Written in Rust
 
 ---
 
-RChess is a chess library designed to be used for applications that need to access chess games and or chess boards. For
-example, a UCI GUI or an online chess game application.
+**RChess** is a Rust-based library designed for applications that need to work with chess games or boards, such as UCI GUIs or online chess platforms.
 
-Note: RChess is still under development with many features planned. The API may change.
+> **Note:** RChess is currently under active development, with many more features planned. The API is subject to change.
 
-If you find any bugs, or have any suggestions that will make the code easier to read or faster, please feel free create 
-a pull request. 
-
-For big API changes or new features, please create an issue in the github issues tab.
+If you encounter any bugs, have suggestions for improving code readability or performance, or would like to contribute, we encourage you to create a pull request. For significant API changes or feature requests, please open an issue on GitHub.
 
 ---
 
-## Examples
+## Getting Started
+
+### Installation
+
+Add the following to your `Cargo.toml`:
+
+```toml
+[dependencies]
+rchess = "1.0.0"
+```
+
+### Usage Example
 
 ```rust
 use rchess::ChessGame;
@@ -27,7 +35,7 @@ fn main() {
     // Create a new chess game.
     let mut game = ChessGame::new();
     
-    // Get the legal moves.
+    // Get the legal moves for the current position.
     let moves = game.moves();
     
     // Make a move.
@@ -35,6 +43,19 @@ fn main() {
 }
 ```
 
+---
+
+## Contributing
+
+We welcome contributions! Please adhere to the following guidelines:
+
+- **Bug Reports & Feature Requests:** Open an issue on the [GitHub Issues](https://github.com/Shadowcat650/rchess/issues) page.
+- **Code Contributions:** Fork the repository and create a pull request.
+
+---
+
 ## License
 
-RChess is licensed under the MIT licence.
+This project is licensed under the MIT License. See the [LICENSE](https://github.com/Shadowcat650/rchess/blob/main/LICENSE) file for details.
+
+---
