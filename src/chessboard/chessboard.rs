@@ -2,11 +2,14 @@ use super::tables;
 use super::zobrist::ZobristHash;
 use crate::chessboard::builder::{BoardBuilder, BoardBuilderError};
 use crate::chessboard::castling_rights::CastlingRights;
-use crate::chessboard::tables::{get_bishop_attacks, get_king_attacks, get_knight_attacks, get_pawn_attacks, get_rook_attacks};
+use crate::chessboard::tables::{
+    get_bishop_attacks, get_king_attacks, get_knight_attacks, get_pawn_attacks, get_rook_attacks,
+};
 use crate::defs::*;
 use crate::{MoveGen, StrMoveCreationError};
 use std::fmt::{Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
+use std::num::ParseIntError;
 use thiserror::Error;
 
 /// The [`Move`] enum represents a move on a chess board.
@@ -108,6 +111,9 @@ pub enum FenFormatError {
 
     #[error("the fen en passant section was missing")]
     MissingEnPassant,
+
+    #[error("the halmove clock section was invalid")]
+    InvalidHalfMoveSection,
 }
 
 /// The [`Footprint`] struct is used to identify a [`ChessBoard`] without extra computed data.
@@ -256,7 +262,21 @@ impl ChessBoard {
             return Err(FenFormatError::InvalidEnPassant.into());
         }
 
-        Ok(Self::from_builder(builder)?)
+        let mut board = Self::from_builder(builder)?;
+
+        // Load halfmove clock (if provided).
+        if let Some(halfmoves) = fen.next() {
+            match halfmoves.parse::<u8>() {
+                Ok(halfmoves) if halfmoves <= 100 => board.half_move_clock = halfmoves,
+                _ => {
+                    return Err(FenLoadError::Formatting(
+                        FenFormatError::InvalidHalfMoveSection,
+                    ))
+                }
+            }
+        }
+
+        Ok(board)
     }
 
     /// Creates a new [`ChessBoard`] from the given [`BoardBuilder`].
@@ -781,10 +801,7 @@ impl ChessBoard {
 
         // Look for king checkers.
         let king_check_locations = get_king_attacks(square);
-        if self
-            .query(Piece::King, by)
-            .overlaps(king_check_locations)
-        {
+        if self.query(Piece::King, by).overlaps(king_check_locations) {
             return true;
         }
 

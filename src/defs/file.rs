@@ -1,4 +1,4 @@
-use super::{Square};
+use super::Square;
 
 /// All the files in order.
 pub const FILES: [File; 8] = [

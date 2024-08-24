@@ -29,7 +29,7 @@ fn stalemate() {
 }
 
 #[test]
-fn checkmate() {
+fn checkmate_black() {
     let mut game = ChessGame::new();
     for mv in ["f2f3", "e7e6", "g2g4", "d8h4"] {
         assert!(game.result().is_none());
@@ -37,6 +37,12 @@ fn checkmate() {
         game.make_move(mv).unwrap();
     }
     assert_eq!(game.result(), Some(GameResult::BlackWins));
+}
+
+#[test]
+fn checkmate_white() {
+    let mut game = ChessGame::from_fen("R5k1/8/6K1/8/8/8/8/8 b - -").unwrap();
+    assert_eq!(game.result(), Some(GameResult::WhiteWins));
 }
 
 #[test]
@@ -142,7 +148,7 @@ fn fifty_moves() {
         for _ in 0..12 {
             let rook_sq = match game.board().turn() {
                 Color::White => &mut w_rook_sq,
-                Color::Black => &mut b_rook_sq
+                Color::Black => &mut b_rook_sq,
             };
 
             let start = *rook_sq;
@@ -157,7 +163,7 @@ fn fifty_moves() {
         for _ in 0..12 {
             let rook_sq = match game.board().turn() {
                 Color::White => &mut w_rook_sq,
-                Color::Black => &mut b_rook_sq
+                Color::Black => &mut b_rook_sq,
             };
 
             let start = *rook_sq;
@@ -187,6 +193,38 @@ fn fifty_moves() {
         let mv = game.create_move(start, end).unwrap();
         game.make_move(mv).unwrap();
     }
+    assert_eq!(
+        game.result(),
+        Some(GameResult::Draw {
+            reason: DrawReason::FiftyMoves
+        })
+    );
+}
+
+#[test]
+fn loaded_halfmoves() {
+    let game = ChessGame::from_fen("7k/8/1r6/8/8/6R1/8/K7 w - - 100").unwrap();
+    assert_eq!(
+        game.result(),
+        Some(GameResult::Draw {
+            reason: DrawReason::FiftyMoves
+        })
+    );
+}
+
+#[test]
+fn halfmove_reset() {
+    let mut game = ChessGame::from_fen("8/8/8/8/8/PK3k2/8/8 w - - 99").unwrap();
+    game.make_move(game.create_str_move("a3a4").unwrap())
+        .unwrap();
+    assert!(game.result().is_none());
+}
+
+#[test]
+fn halfmove_not_reset() {
+    let mut game = ChessGame::from_fen("8/8/8/8/8/RK3k2/8/8 w - - 99").unwrap();
+    game.make_move(game.create_str_move("a3a4").unwrap())
+        .unwrap();
     assert_eq!(
         game.result(),
         Some(GameResult::Draw {

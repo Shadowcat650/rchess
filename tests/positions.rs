@@ -1,5 +1,5 @@
-use rchess::{BoardBuilder, ChessBoard, Color, Piece, Square};
 use rchess::File::C;
+use rchess::{BoardBuilder, ChessBoard, Color, Piece, Square};
 
 #[test]
 fn start_pos() {
@@ -101,5 +101,17 @@ fn pawn_on_last_b() {
 fn from_moves_err() {
     let board =
         ChessBoard::from_str_moves(&["e2e3", "d7d6", "e1e2", "c8g4", "g1f3", "g4h5", "f3e1"]);
+    assert!(board.is_err());
+}
+
+#[test]
+fn halfmoves() {
+    let board = ChessBoard::from_fen("7k/8/1r6/8/8/6R1/8/K7 w - - 50").unwrap();
+    assert_eq!(board.halfmoves(), 50);
+}
+
+#[test]
+fn invalid_halfmoves() {
+    let board = ChessBoard::from_fen("7k/8/1r6/8/8/6R1/8/K7 w - - 101");
     assert!(board.is_err());
 }
