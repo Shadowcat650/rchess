@@ -25,7 +25,7 @@ Add the following to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-rchess = "1.0.0"
+rchess = "1.0.1"
 ```
 
 ### Usage Example
