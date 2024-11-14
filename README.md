@@ -40,6 +40,19 @@ fn main() {
 }
 ```
 
+### Improving Build Time
+To improve the slow build time, which is caused by generating bitboard magics, set your build override opt-level to 3.
+```toml
+[profile.dev.build-override]
+opt-level = 3
+
+[profile.test.build-override]
+opt-level = 3
+
+[profile.release.build-override]
+opt-level = 3
+```
+
 ---
 
 ## Contributing
