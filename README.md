@@ -1,6 +1,3 @@
-
----
-
 # RChess
 
 A Chess Library Written in Rust
@@ -25,7 +22,7 @@ Add the following to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-rchess = "1.0.1"
+rchess = "2.0.0"
 ```
 
 ### Usage Example
