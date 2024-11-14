@@ -23,6 +23,7 @@ pub enum DrawReason {
 }
 
 /// The [`ChessGame`] struct represents a game of chess.
+#[derive(Clone, Debug)]
 pub struct ChessGame {
     /// The game state.
     state: ChessBoard,
