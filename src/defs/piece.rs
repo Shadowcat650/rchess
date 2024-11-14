@@ -1,5 +1,5 @@
 /// The [`Piece`] enum represents a chess piece.
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
 pub enum Piece {
     Pawn,
     Knight,

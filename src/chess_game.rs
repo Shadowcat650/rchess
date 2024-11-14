@@ -6,7 +6,7 @@ use crate::{
 use std::collections::HashMap;
 
 /// The [`GameResult`] enum represents the result of a chess game.
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
 pub enum GameResult {
     WhiteWins,
     BlackWins,
@@ -14,7 +14,7 @@ pub enum GameResult {
 }
 
 /// The [`DrawReason`] enum represents the thing that caused a draw to occur.
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
 pub enum DrawReason {
     InsufficientMaterial,
     Stalemate,

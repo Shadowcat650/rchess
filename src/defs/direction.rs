@@ -13,7 +13,7 @@ pub const DIRS: [Direction; 8] = [
 ];
 
 /// The [`Direction`] enum represents a direction on the chess board.
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
 pub enum Direction {
     Up,
     Down,

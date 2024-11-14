@@ -20,7 +20,7 @@ pub use square::*;
 pub const START_FEN: &str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -";
 
 /// The [`CastleSide`] enum represents the side a king can castle.
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
 pub enum CastleSide {
     Kingside,
     Queenside,

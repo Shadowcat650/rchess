@@ -14,7 +14,7 @@ pub const RANKS: [Rank; 8] = [
 
 /// The [`Rank`] enum represents a rank of the chessboard.
 #[repr(u8)]
-#[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub enum Rank {
     First,
     Second,

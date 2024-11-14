@@ -1,7 +1,7 @@
 use crate::{CastleSide, Color};
 
 /// The [`CastlingRights`] struct stores which sides and colors can castle
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
 pub struct CastlingRights(u8);
 
 impl CastlingRights {

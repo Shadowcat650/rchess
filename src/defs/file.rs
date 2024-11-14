@@ -14,7 +14,7 @@ pub const FILES: [File; 8] = [
 
 /// The [`File`] enum represents a file of the chessboard.
 #[repr(u8)]
-#[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub enum File {
     A,
     B,

@@ -13,7 +13,7 @@ use std::num::ParseIntError;
 use thiserror::Error;
 
 /// The [`Move`] enum represents a move on a chess board.
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
 pub enum Move {
     Quiet {
         start: Square,
@@ -51,7 +51,7 @@ pub enum Move {
 }
 
 /// The [`BuilderConversionError`] enum is the error type for converting a [`BoardBuilder`] to a [`ChessBoard`].
-#[derive(Error, Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Error, Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub enum BuilderConversionError {
     #[error("the turn was not set")]
     TurnNotSet,
@@ -73,7 +73,7 @@ pub enum BuilderConversionError {
 }
 
 /// The [`FenLoadError`] enum is the error type for loading a fen position.
-#[derive(Error, Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Error, Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub enum FenLoadError {
     #[error("there was an error with the fen formatting")]
     Formatting(#[from] FenFormatError),
@@ -86,7 +86,7 @@ pub enum FenLoadError {
 }
 
 /// The [`FenFormatError`] enum is the error type for a fen's formatting.
-#[derive(Error, Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Error, Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub enum FenFormatError {
     #[error("the fen's piece section is invalid")]
     InvalidPieceSection,
@@ -1037,6 +1037,12 @@ impl PartialEq for ChessBoard {
 }
 
 impl Eq for ChessBoard {}
+
+impl Hash for ChessBoard {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.hash.hash(state);
+    }
+}
 
 const ANSI_RESET_CODE: &str = "\x1b[0m";
 const ANSI_GRAY_CODE: &str = "\x1b[90m";

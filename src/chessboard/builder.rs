@@ -5,7 +5,7 @@ use crate::{ChessBoard, ZobristHash};
 use thiserror::Error;
 
 /// The [`BoardBuilderError`] enum is the error type produced by the [`BoardBuilder`].
-#[derive(Error, Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Error, Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub enum BoardBuilderError {
     #[error("tried to insert two kings of the same color")]
     TwoKings,
