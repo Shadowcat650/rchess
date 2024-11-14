@@ -1,7 +1,7 @@
 use crate::chessboard::Footprint;
 use crate::{
-    BitBoard, ChessBoard, Color, FenLoadError, Move, MoveCreationError, MoveGen, PieceType, Square,
-    StrMoveCreationError,
+    BitBoard, ChessBoard, Color, FenLoadError, Move, MoveCreationError, MoveGen, Piece, PieceType,
+    Square, StrMoveCreationError,
 };
 use std::collections::HashMap;
 
@@ -163,8 +163,8 @@ impl ChessGame {
                     reason: DrawReason::InsufficientMaterial,
                 })
             } else if self.state.color_occupancy(Color::Black).popcnt() == 2 {
-                if !self.state.query(PieceType::Bishop, Color::Black).is_empty()
-                    || !self.state.query(PieceType::Knight, Color::Black).is_empty()
+                if !self.state.query(Piece::BLACK_BISHOP).is_empty()
+                    || !self.state.query(Piece::BLACK_KNIGHT).is_empty()
                 {
                     self.result = Some(GameResult::Draw {
                         reason: DrawReason::InsufficientMaterial,
@@ -175,12 +175,12 @@ impl ChessGame {
             if self.state.color_occupancy(Color::Black).popcnt() == 2 {
                 if self
                     .state
-                    .query(PieceType::Bishop, Color::White)
+                    .query(Piece::WHITE_BISHOP)
                     .overlaps(BitBoard::WHITE_SQUARES)
                 {
                     if self
                         .state
-                        .query(PieceType::Bishop, Color::Black)
+                        .query(Piece::BLACK_BISHOP)
                         .overlaps(BitBoard::WHITE_SQUARES)
                     {
                         self.result = Some(GameResult::Draw {
@@ -189,12 +189,12 @@ impl ChessGame {
                     }
                 } else if self
                     .state
-                    .query(PieceType::Bishop, Color::White)
+                    .query(Piece::WHITE_BISHOP)
                     .overlaps(BitBoard::BLACK_SQUARES)
                 {
                     if self
                         .state
-                        .query(PieceType::Bishop, Color::Black)
+                        .query(Piece::BLACK_BISHOP)
                         .overlaps(BitBoard::BLACK_SQUARES)
                     {
                         self.result = Some(GameResult::Draw {
@@ -203,8 +203,8 @@ impl ChessGame {
                     }
                 }
             } else if self.state.color_occupancy(Color::Black).popcnt() == 1 {
-                if !self.state.query(PieceType::Bishop, Color::White).is_empty()
-                    || !self.state.query(PieceType::Knight, Color::White).is_empty()
+                if !self.state.query(Piece::WHITE_BISHOP).is_empty()
+                    || !self.state.query(Piece::WHITE_KNIGHT).is_empty()
                 {
                     self.result = Some(GameResult::Draw {
                         reason: DrawReason::InsufficientMaterial,

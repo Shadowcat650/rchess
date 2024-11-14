@@ -40,11 +40,11 @@ pub fn generate_moves<const CAPTURES_ONLY: bool>(chessboard: &ChessBoard) -> Mov
 pub fn generate_square_legal(chessboard: &ChessBoard, square: Square) -> BitBoard {
     let piece = match chessboard.piece_at(square) {
         None => return BitBoard::EMPTY,
-        Some((piece, _)) => piece,
+        Some(piece) => piece,
     };
 
     if chessboard.checkers().popcnt() > 1 {
-        if piece != PieceType::King {
+        if piece.kind != PieceType::King {
             return BitBoard::EMPTY;
         }
         return generate_king_attacks::<false, true>(
@@ -54,7 +54,7 @@ pub fn generate_square_legal(chessboard: &ChessBoard, square: Square) -> BitBoar
     }
 
     if chessboard.checkers().is_empty() {
-        match piece {
+        match piece.kind {
             PieceType::Pawn => generate_pawn_attacks::<false, false>(chessboard, square),
             PieceType::Knight => generate_knight_attacks::<false, false, false>(chessboard, square),
             PieceType::Bishop => generate_bishop_attacks::<false, false>(chessboard, square),
@@ -63,7 +63,7 @@ pub fn generate_square_legal(chessboard: &ChessBoard, square: Square) -> BitBoar
             PieceType::King => generate_king_attacks::<false, false>(chessboard, square),
         }
     } else {
-        match piece {
+        match piece.kind {
             PieceType::Pawn => generate_pawn_attacks::<false, true>(chessboard, square),
             PieceType::Knight => generate_knight_attacks::<false, true, false>(chessboard, square),
             PieceType::Bishop => generate_bishop_attacks::<false, true>(chessboard, square),
@@ -83,7 +83,7 @@ fn generate_pawn_moves<const CAPTURES_ONLY: bool, const IN_CHECK: bool>(
     let us = chessboard.turn();
 
     // The pawns that can potentially move.
-    let pawns = chessboard.query(PieceType::Pawn, us);
+    let pawns = chessboard.query((PieceType::Pawn, us));
     for pawn_sq in pawns {
         // Get the pawn attacks.
         let attacks = generate_pawn_attacks::<CAPTURES_ONLY, IN_CHECK>(chessboard, pawn_sq);
@@ -169,12 +169,12 @@ fn generate_pawn_attacks<const CAPTURES_ONLY: bool, const IN_CHECK: bool>(
                 chessboard.occupancy() ^ (square.bitboard() | en_passant_bb | en_passanted);
 
             let bishop_check_spots = get_bishop_attacks(king_sq, new_occupancy);
-            let enemy_bishops = chessboard.query(PieceType::Bishop, them)
-                | chessboard.query(PieceType::Queen, them);
+            let enemy_bishops = chessboard.query((PieceType::Bishop, them))
+                | chessboard.query((PieceType::Queen, them));
 
             let rook_check_spots = get_rook_attacks(king_sq, new_occupancy);
-            let enemy_rooks =
-                chessboard.query(PieceType::Rook, them) | chessboard.query(PieceType::Queen, them);
+            let enemy_rooks = chessboard.query((PieceType::Rook, them))
+                | chessboard.query((PieceType::Queen, them));
 
             if !enemy_rooks.overlaps(rook_check_spots)
                 && !enemy_bishops.overlaps(bishop_check_spots)
@@ -205,7 +205,7 @@ fn generate_knight_moves<const CAPTURES_ONLY: bool, const IN_CHECK: bool>(
     let us = chessboard.turn();
 
     // The knights that can potentially move.
-    let knights = chessboard.query(PieceType::Knight, us) & !chessboard.pinned();
+    let knights = chessboard.query((PieceType::Knight, us)) & !chessboard.pinned();
 
     // Generate moves for each unpinned knight.
     for knight_sq in knights {
@@ -325,7 +325,7 @@ fn generate_bishop_moves<const CAPTURES_ONLY: bool, const IN_CHECK: bool>(
     let us = chessboard.turn();
 
     // Get the bishops that can potentially move.
-    let bishops = chessboard.query(PieceType::Bishop, us);
+    let bishops = chessboard.query((PieceType::Bishop, us));
 
     for bishop_sq in bishops {
         // Generate the bishop attacks.
@@ -397,7 +397,7 @@ fn generate_rook_moves<const CAPTURES_ONLY: bool, const IN_CHECK: bool>(
     let us = chessboard.turn();
 
     // Get the rooks that can potentially move.
-    let rooks = chessboard.query(PieceType::Rook, us);
+    let rooks = chessboard.query((PieceType::Rook, us));
 
     for rook_sq in rooks {
         // Get the rook attacks.
@@ -469,7 +469,7 @@ fn generate_queen_moves<const CAPTURES_ONLY: bool, const IN_CHECK: bool>(
     let us = chessboard.turn();
 
     // Get the queens that can potentially move.
-    let queens = chessboard.query(PieceType::Queen, us);
+    let queens = chessboard.query((PieceType::Queen, us));
 
     for queen_sq in queens {
         // Generate the queen attacks.
@@ -592,25 +592,25 @@ fn is_square_attacked_with_occupancy(
 ) -> bool {
     // Look for pawn attackers.
     let pawn_check_locations = get_pawn_attacks(square, !by);
-    if !(chessboard.query(PieceType::Pawn, by) & pawn_check_locations).is_empty() {
+    if !(chessboard.query((PieceType::Pawn, by)) & pawn_check_locations).is_empty() {
         return true;
     };
 
     // Look for knight attackers.
     let knight_check_locations = get_knight_attacks(square);
-    if !(chessboard.query(PieceType::Knight, by) & knight_check_locations).is_empty() {
+    if !(chessboard.query((PieceType::Knight, by)) & knight_check_locations).is_empty() {
         return true;
     };
 
     // Look for king attackers.
     let king_check_locations = get_king_attacks(square);
-    if !(chessboard.query(PieceType::King, by) & king_check_locations).is_empty() {
+    if !(chessboard.query((PieceType::King, by)) & king_check_locations).is_empty() {
         return true;
     };
 
     // Look for bishop & queen attackers.
     let bishop_check_locations = get_bishop_attacks(square, occupancy);
-    if !((chessboard.query(PieceType::Bishop, by) | chessboard.query(PieceType::Queen, by))
+    if !((chessboard.query((PieceType::Bishop, by)) | chessboard.query((PieceType::Queen, by)))
         & bishop_check_locations)
         .is_empty()
     {
@@ -619,7 +619,7 @@ fn is_square_attacked_with_occupancy(
 
     // Look for rook & queen attackers.
     let rook_check_locations = get_rook_attacks(square, occupancy);
-    if !((chessboard.query(PieceType::Rook, by) | chessboard.query(PieceType::Queen, by))
+    if !((chessboard.query((PieceType::Rook, by)) | chessboard.query((PieceType::Queen, by)))
         & rook_check_locations)
         .is_empty()
     {

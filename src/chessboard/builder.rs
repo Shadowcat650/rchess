@@ -29,7 +29,7 @@ pub enum BoardBuilderError {
 /// The [`BoardBuilder`] struct helps construct a [`ChessBoard`].
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub struct BoardBuilder {
-    pub(super) piece_map: [Option<(PieceType, Color)>; 64],
+    pub(super) piece_map: [Option<Piece>; 64],
     pub(super) piece_bbs: [BitBoard; 6],
     pub(super) color_bbs: [BitBoard; 2],
     pub(super) turn: Option<Color>,
@@ -57,27 +57,28 @@ impl BoardBuilder {
     ///
     /// # Examples
     /// ```
-    /// use rchess::{BoardBuilder, Color, PieceType, Square};
+    /// use rchess::{BoardBuilder, Color, Piece, PieceType, Square};
     ///
     /// // Create a new board builder with two kings.
     /// let builder = BoardBuilder::new()
-    ///     .piece(Square::A1, PieceType::King, Color::White).unwrap()
-    ///     .piece(Square::H8, PieceType::King, Color::Black).unwrap();
+    ///     .piece(Square::A1, Piece::WHITE_KING).unwrap()
+    ///     .piece(Square::H8, Piece::BLACK_KING).unwrap();
     /// ```
     #[inline]
     pub fn piece(
         mut self,
         square: Square,
-        piece: PieceType,
-        color: Color,
+        piece: impl Into<Piece>,
     ) -> Result<Self, BoardBuilderError> {
-        if piece == PieceType::King {
-            if !(self.piece_bbs[PieceType::King.index()] & self.color_bbs[color.index()]).is_empty()
+        let piece = piece.into();
+        if piece.kind == PieceType::King {
+            if !(self.piece_bbs[PieceType::King.index()] & self.color_bbs[piece.color.index()])
+                .is_empty()
             {
                 return Err(BoardBuilderError::TwoKings);
             }
-        } else if piece == PieceType::Pawn {
-            match color {
+        } else if piece.kind == PieceType::Pawn {
+            match piece.color {
                 Color::White => {
                     if square.rank() == Rank::Eighth {
                         return Err(BoardBuilderError::PawnOnLast);
@@ -95,10 +96,10 @@ impl BoardBuilder {
             return Err(BoardBuilderError::TwoPieces);
         }
 
-        self.piece_map[square.index()] = Some((piece, color));
-        self.piece_bbs[piece.index()] |= square.bitboard();
-        self.color_bbs[color.index()] |= square.bitboard();
-        self.hash.piece(square, piece, color);
+        self.piece_map[square.index()] = Some(piece);
+        self.piece_bbs[piece.kind.index()] |= square.bitboard();
+        self.color_bbs[piece.color.index()] |= square.bitboard();
+        self.hash.piece(square, piece);
 
         Ok(self)
     }
@@ -182,12 +183,12 @@ impl BoardBuilder {
     ///
     /// # Examples
     /// ```no_run
-    /// use rchess::{BoardBuilder, Color, PieceType, Square};
+    /// use rchess::{BoardBuilder, Color, Piece, Square};
     ///
     /// // Create a new chess board with two kings with black to move.
     /// let builder = BoardBuilder::new()
-    ///     .piece(Square::A1, PieceType::King, Color::White).unwrap()
-    ///     .piece(Square::H8, PieceType::King, Color::Black).unwrap()
+    ///     .piece(Square::A1, Piece::WHITE_KING).unwrap()
+    ///     .piece(Square::H8, Piece::BLACK_KING).unwrap()
     ///     .turn(Color::Black).unwrap()
     ///     .finish().unwrap();
     /// ```

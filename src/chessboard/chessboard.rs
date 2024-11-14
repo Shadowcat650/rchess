@@ -9,7 +9,6 @@ use crate::defs::*;
 use crate::{MoveGen, StrMoveCreationError};
 use std::fmt::{Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
-use std::num::ParseIntError;
 use thiserror::Error;
 
 /// The [`Move`] enum represents a move on a chess board.
@@ -208,15 +207,9 @@ impl ChessBoard {
             match c {
                 // Insert a piece.
                 'p' | 'n' | 'b' | 'r' | 'q' | 'k' | 'P' | 'N' | 'B' | 'R' | 'Q' | 'K' => {
-                    let piece = PieceType::from_char(c).unwrap();
-                    let color = if c.is_ascii_uppercase() {
-                        Color::White
-                    } else {
-                        Color::Black
-                    };
                     let square =
                         Square::from_u8(square_idx).ok_or(FenFormatError::InvalidPieceSection)?;
-                    builder = builder.piece(square, piece, color)?;
+                    builder = builder.piece(square, Piece::from_char(c).unwrap())?;
                     square_idx += 1;
                 }
                 // Skip empty squares.
@@ -287,8 +280,8 @@ impl ChessBoard {
     ///
     /// // Create a board builder.
     /// let builder = BoardBuilder::new()
-    ///     .piece(Square::A1, PieceType::King, Color::White).unwrap()
-    ///     .piece(Square::H8, PieceType::King, Color::Black).unwrap()
+    ///     .piece(Square::A1, (PieceType::King, Color::White)).unwrap()
+    ///     .piece(Square::H8, (PieceType::King, Color::Black)).unwrap()
     ///     .turn(Color::Black).unwrap();
     ///
     /// // Convert the builder to a chess board.
@@ -321,8 +314,8 @@ impl ChessBoard {
                         return Err(BuilderConversionError::InvalidEnPassant);
                     }
 
-                    if Some((PieceType::Pawn, Color::Black))
-                        != board_builder.piece_map[sq.down().unwrap().index()]
+                    if board_builder.piece_map[sq.down().unwrap().index()]
+                        != Some(Piece::BLACK_PAWN)
                     {
                         return Err(BuilderConversionError::InvalidEnPassant);
                     }
@@ -332,8 +325,7 @@ impl ChessBoard {
                         return Err(BuilderConversionError::InvalidEnPassant);
                     }
 
-                    if Some((PieceType::Pawn, Color::White))
-                        != board_builder.piece_map[sq.up().unwrap().index()]
+                    if board_builder.piece_map[sq.up().unwrap().index()] != Some(Piece::WHITE_PAWN)
                     {
                         return Err(BuilderConversionError::InvalidEnPassant);
                     }
@@ -345,9 +337,8 @@ impl ChessBoard {
             .castling_rights
             .is_set(CastleSide::Kingside, Color::White)
         {
-            if board_builder.piece_map[Square::E1.index()] != Some((PieceType::King, Color::White))
-                || board_builder.piece_map[Square::H1.index()]
-                    != Some((PieceType::Rook, Color::White))
+            if board_builder.piece_map[Square::E1.index()] != Some(Piece::WHITE_KING)
+                || board_builder.piece_map[Square::H1.index()] != Some(Piece::WHITE_ROOK)
             {
                 return Err(BuilderConversionError::InvalidCastleRight);
             }
@@ -357,9 +348,8 @@ impl ChessBoard {
             .castling_rights
             .is_set(CastleSide::Queenside, Color::White)
         {
-            if board_builder.piece_map[Square::E1.index()] != Some((PieceType::King, Color::White))
-                || board_builder.piece_map[Square::A1.index()]
-                    != Some((PieceType::Rook, Color::White))
+            if board_builder.piece_map[Square::E1.index()] != Some(Piece::WHITE_KING)
+                || board_builder.piece_map[Square::A1.index()] != Some(Piece::WHITE_ROOK)
             {
                 return Err(BuilderConversionError::InvalidCastleRight);
             }
@@ -369,9 +359,8 @@ impl ChessBoard {
             .castling_rights
             .is_set(CastleSide::Kingside, Color::Black)
         {
-            if board_builder.piece_map[Square::E8.index()] != Some((PieceType::King, Color::Black))
-                || board_builder.piece_map[Square::H8.index()]
-                    != Some((PieceType::Rook, Color::Black))
+            if board_builder.piece_map[Square::E8.index()] != Some(Piece::BLACK_KING)
+                || board_builder.piece_map[Square::H8.index()] != Some(Piece::BLACK_ROOK)
             {
                 return Err(BuilderConversionError::InvalidCastleRight);
             }
@@ -381,9 +370,8 @@ impl ChessBoard {
             .castling_rights
             .is_set(CastleSide::Kingside, Color::Black)
         {
-            if board_builder.piece_map[Square::E8.index()] != Some((PieceType::King, Color::Black))
-                || board_builder.piece_map[Square::A8.index()]
-                    != Some((PieceType::Rook, Color::Black))
+            if board_builder.piece_map[Square::E8.index()] != Some(Piece::BLACK_KING)
+                || board_builder.piece_map[Square::A8.index()] != Some(Piece::BLACK_ROOK)
             {
                 return Err(BuilderConversionError::InvalidCastleRight);
             }
@@ -463,18 +451,13 @@ impl ChessBoard {
                     // Increase gap
                     None => gap += 1,
                     // Add piece
-                    Some((piece, color)) => {
+                    Some(piece) => {
                         if gap != 0 {
                             fen_pieces += gap.to_string().as_str();
                             gap = 0;
                         }
 
-                        let c = match color {
-                            Color::White => piece.to_char().to_ascii_uppercase(),
-                            Color::Black => piece.to_char(),
-                        };
-
-                        fen_pieces.push(c);
+                        fen_pieces.push(piece.to_char());
                     }
                 };
 
@@ -567,7 +550,7 @@ impl ChessBoard {
                     reset_halfmoves = true;
                 }
 
-                self.move_piece(start, end, moving, us);
+                self.move_piece(start, end, (moving, us));
             }
             Move::Capture { start, end, moving } => {
                 // Remove relevant castling rights for moving kings or rooks.
@@ -612,7 +595,7 @@ impl ChessBoard {
                 self.remove(end);
 
                 // Move the piece.
-                self.move_piece(start, end, moving, us);
+                self.move_piece(start, end, (moving, us));
 
                 reset_halfmoves = true;
             }
@@ -626,10 +609,10 @@ impl ChessBoard {
                 };
 
                 // Move the rook.
-                self.move_piece(rook_start, rook_end, PieceType::Rook, us);
+                self.move_piece(rook_start, rook_end, (PieceType::Rook, us));
 
                 // Move the king.
-                self.move_piece(start, end, PieceType::King, us);
+                self.move_piece(start, end, (PieceType::King, us));
 
                 // Unset castling rights for the side that moved.
                 self.unset_color_rights(us);
@@ -642,7 +625,7 @@ impl ChessBoard {
                 };
 
                 // Move the piece.
-                self.move_piece(start, end, PieceType::Pawn, us);
+                self.move_piece(start, end, (PieceType::Pawn, us));
 
                 reset_halfmoves = true;
             }
@@ -654,7 +637,7 @@ impl ChessBoard {
                 };
 
                 // Move the piece.
-                self.move_piece(start, end, PieceType::Pawn, us);
+                self.move_piece(start, end, (PieceType::Pawn, us));
 
                 reset_halfmoves = true;
             }
@@ -663,7 +646,7 @@ impl ChessBoard {
                 self.remove(start);
 
                 // Insert the promoted piece.
-                self.insert(end, target, us);
+                self.insert(end, (target, us));
 
                 reset_halfmoves = true;
             }
@@ -692,7 +675,7 @@ impl ChessBoard {
                 self.remove(start);
 
                 // Insert the promoted piece.
-                self.insert(end, target, us);
+                self.insert(end, (target, us));
 
                 reset_halfmoves = true;
             }
@@ -726,9 +709,10 @@ impl ChessBoard {
         self.pinned = BitBoard::EMPTY;
 
         // Get enemy potential pinners (rooks, bishops, and queens).
-        let enemy_rooks = self.query(PieceType::Rook, them) | self.query(PieceType::Queen, them);
+        let enemy_rooks =
+            self.query((PieceType::Rook, them)) | self.query((PieceType::Queen, them));
         let enemy_bishops =
-            self.query(PieceType::Bishop, them) | self.query(PieceType::Queen, them);
+            self.query((PieceType::Bishop, them)) | self.query((PieceType::Queen, them));
 
         // Get the enemy pieces pinning our pieces.
         let rook_pinners =
@@ -755,20 +739,22 @@ impl ChessBoard {
 
         // Look for pawn checkers.
         let pawn_check_locations = get_pawn_attacks(king_sq, us);
-        self.checkers |= self.query(PieceType::Pawn, them) & pawn_check_locations;
+        self.checkers |= self.query((PieceType::Pawn, them)) & pawn_check_locations;
 
         // Look for knight checkers.
         let knight_check_locations = get_knight_attacks(king_sq);
-        self.checkers |= self.query(PieceType::Knight, them) & knight_check_locations;
+        self.checkers |= self.query((PieceType::Knight, them)) & knight_check_locations;
 
         // Look for bishop & queen checkers.
         let bishop_check_locations = get_bishop_attacks(king_sq, self.occupancy());
-        self.checkers |= (self.query(PieceType::Bishop, them) | self.query(PieceType::Queen, them))
+        self.checkers |= (self.query((PieceType::Bishop, them))
+            | self.query((PieceType::Queen, them)))
             & bishop_check_locations;
 
         // Look for rook & queen checkers.
         let rook_check_locations = get_rook_attacks(king_sq, self.occupancy());
-        self.checkers |= (self.query(PieceType::Rook, them) | self.query(PieceType::Queen, them))
+        self.checkers |= (self.query((PieceType::Rook, them))
+            | self.query((PieceType::Queen, them)))
             & rook_check_locations;
     }
 
@@ -792,7 +778,7 @@ impl ChessBoard {
         // Look for pawn checkers.
         let pawn_check_locations = get_pawn_attacks(square, us);
         if self
-            .query(PieceType::Pawn, by)
+            .query((PieceType::Pawn, by))
             .overlaps(pawn_check_locations)
         {
             return true;
@@ -801,7 +787,7 @@ impl ChessBoard {
         // Look for knight checkers.
         let knight_check_locations = get_knight_attacks(square);
         if self
-            .query(PieceType::Knight, by)
+            .query((PieceType::Knight, by))
             .overlaps(knight_check_locations)
         {
             return true;
@@ -810,7 +796,7 @@ impl ChessBoard {
         // Look for king checkers.
         let king_check_locations = get_king_attacks(square);
         if self
-            .query(PieceType::King, by)
+            .query((PieceType::King, by))
             .overlaps(king_check_locations)
         {
             return true;
@@ -818,7 +804,7 @@ impl ChessBoard {
 
         // Look for bishop & queen checkers.
         let bishop_check_locations = get_bishop_attacks(square, self.occupancy());
-        if (self.query(PieceType::Bishop, by) | self.query(PieceType::Queen, by))
+        if (self.query((PieceType::Bishop, by)) | self.query((PieceType::Queen, by)))
             .overlaps(bishop_check_locations)
         {
             return true;
@@ -826,7 +812,7 @@ impl ChessBoard {
 
         // Look for rook & queen checkers.
         let rook_check_locations = get_rook_attacks(square, self.occupancy());
-        if (self.query(PieceType::Rook, by) | self.query(PieceType::Queen, by))
+        if (self.query((PieceType::Rook, by)) | self.query((PieceType::Queen, by)))
             .overlaps(rook_check_locations)
         {
             return true;
@@ -838,30 +824,32 @@ impl ChessBoard {
     /// Inserts a new piece into the [`ChessBoard`].
     ///
     /// Note: This function assumes that there is not already a piece at the given [`Square`].
-    fn insert(&mut self, square: Square, piece: PieceType, color: Color) {
-        self.piece_bbs[piece.index()] |= square.bitboard();
-        self.color_bbs[color.index()] |= square.bitboard();
-        self.hash.piece(square, piece, color);
+    fn insert(&mut self, square: Square, piece: impl Into<Piece>) {
+        let piece = piece.into();
+        self.piece_bbs[piece.kind.index()] |= square.bitboard();
+        self.color_bbs[piece.color.index()] |= square.bitboard();
+        self.hash.piece(square, piece);
     }
 
     /// Removes a piece from the [`ChessBoard`]
     ///
     /// Note: This function assumes there is a piece at the given [`Square`].
     fn remove(&mut self, square: Square) {
-        let (piece, color) = self.piece_at(square).unwrap();
-        self.piece_bbs[piece.index()] ^= square.bitboard();
-        self.color_bbs[color.index()] ^= square.bitboard();
-        self.hash.piece(square, piece, color);
+        let piece = self.piece_at(square).unwrap();
+        self.piece_bbs[piece.kind.index()] ^= square.bitboard();
+        self.color_bbs[piece.color.index()] ^= square.bitboard();
+        self.hash.piece(square, piece);
     }
 
     /// Moves a piece from one square to another.
     ///
     /// Note: This function assumes that there is a piece at the start square and that the end square is empty.
-    fn move_piece(&mut self, start: Square, end: Square, piece: PieceType, color: Color) {
-        self.piece_bbs[piece.index()] ^= start.bitboard() | end.bitboard();
-        self.color_bbs[color.index()] ^= start.bitboard() | end.bitboard();
-        self.hash.piece(start, piece, color);
-        self.hash.piece(end, piece, color);
+    fn move_piece(&mut self, start: Square, end: Square, piece: impl Into<Piece>) {
+        let piece = piece.into();
+        self.piece_bbs[piece.kind.index()] ^= start.bitboard() | end.bitboard();
+        self.color_bbs[piece.color.index()] ^= start.bitboard() | end.bitboard();
+        self.hash.piece(start, piece);
+        self.hash.piece(end, piece);
     }
 
     /// Toggles the current turn.
@@ -908,17 +896,17 @@ impl ChessBoard {
     ///
     /// # Examples
     /// ```
-    /// use rchess::{ChessBoard, Square, PieceType, Color};
+    /// use rchess::{ChessBoard, Square, Piece};
     ///
     /// // Create a new chess board.
     /// let board = ChessBoard::new();
     ///
-    /// assert_eq!(board.piece_at(Square::A1), Some((PieceType::Rook, Color::White)));
-    /// assert_eq!(board.piece_at(Square::A8), Some((PieceType::Rook, Color::Black)));
+    /// assert_eq!(board.piece_at(Square::A1), Some(Piece::WHITE_ROOK));
+    /// assert_eq!(board.piece_at(Square::A8), Some(Piece::BLACK_ROOK));
     /// assert_eq!(board.piece_at(Square::E5), None);
     /// ```
     #[inline]
-    pub fn piece_at(&self, square: Square) -> Option<(PieceType, Color)> {
+    pub fn piece_at(&self, square: Square) -> Option<Piece> {
         let color = if self.color_bbs[Color::White.index()].overlaps(square.bitboard()) {
             Color::White
         } else if self.color_bbs[Color::Black.index()].overlaps(square.bitboard()) {
@@ -948,13 +936,14 @@ impl ChessBoard {
             }
         };
 
-        Some((piece, color))
+        Some(Piece::new(piece, color))
     }
 
     /// Gets a [`BitBoard`] containing the locations of all the pieces of a given piece type and color.
     #[inline]
-    pub fn query(&self, piece: PieceType, color: Color) -> BitBoard {
-        self.piece_bbs[piece.index()] & self.color_bbs[color.index()]
+    pub fn query(&self, piece: impl Into<Piece>) -> BitBoard {
+        let piece = piece.into();
+        self.piece_bbs[piece.kind.index()] & self.color_bbs[piece.color.index()]
     }
 
     /// Gets a [`BitBoard`] containing the locations of all the pieces on the [`ChessBoard`].
@@ -1002,7 +991,9 @@ impl ChessBoard {
     /// Gets the square of the king of a given [`Color`] on the [`ChessBoard`].
     #[inline]
     pub fn get_king_square(&self, color: Color) -> Square {
-        self.query(PieceType::King, color).b_scan_forward().unwrap()
+        self.query((PieceType::King, color))
+            .b_scan_forward()
+            .unwrap()
     }
 
     /// Gets the checkers.
@@ -1075,14 +1066,7 @@ impl Display for ChessBoard {
 
                 match &self.piece_at(square) {
                     None => write!(f, "-{}", end)?,
-                    Some((piece, color)) => {
-                        let c = match color {
-                            Color::White => piece.to_char().to_ascii_uppercase(),
-                            Color::Black => piece.to_char(),
-                        };
-
-                        write!(f, "{}{}", c, end)?
-                    }
+                    Some(piece) => write!(f, "{}{}", piece.to_char(), end)?,
                 };
             }
         }

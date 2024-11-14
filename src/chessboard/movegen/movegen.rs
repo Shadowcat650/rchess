@@ -338,7 +338,7 @@ impl<'a> MoveGen<'a> {
         // Get extra board info.
         let us = chessboard.turn();
         let them = !chessboard.turn();
-        let (moving, _) = chessboard.piece_at(start).unwrap();
+        let moving = chessboard.piece_at(start).unwrap().kind;
 
         // Look for special pawn moves.
         if moving == PieceType::Pawn {

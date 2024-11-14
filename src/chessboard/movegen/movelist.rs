@@ -91,7 +91,7 @@ impl MoveList {
         for i in 0..self.length {
             let piece_moves = unsafe { self.data.assume_init_ref().get_unchecked(i) };
             let piece_sq = piece_moves.location;
-            let (moving, _) = chessboard.piece_at(piece_sq).unwrap();
+            let moving = chessboard.piece_at(piece_sq).unwrap().kind;
 
             // Pawns have special move cases.
             if moving == PieceType::Pawn {
