@@ -1,12 +1,10 @@
-# RChess
+# rchess
 
 A Chess Library Written in Rust
 
 ---
 
-**RChess** is a Rust-based library designed for applications that need to work with chess games or boards, such as UCI GUIs or online chess platforms.
-
-> **Note:** RChess is currently under active development, with many more features planned. The API is subject to change.
+**rchess** is a Rust-based library designed for applications that need to work with chess games or boards, such as UCI GUIs or online chess platforms.
 
 If you encounter any bugs, have suggestions for improving code readability or performance, or would like to contribute, we encourage you to create a pull request. For significant API changes or feature requests, please open an issue on GitHub.
 
@@ -14,7 +12,7 @@ If you encounter any bugs, have suggestions for improving code readability or pe
 
 ## Getting Started
 
-Documentation for **RChess** can be found [here](https://docs.rs/rchess/1.0.1/rchess/).
+Documentation for **rchess** can be found [here](https://docs.rs/rchess/2.0.0/rchess/).
 
 ### Installation
 
@@ -55,6 +53,6 @@ We welcome contributions! Please adhere to the following guidelines:
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](https://github.com/Shadowcat650/rchess/blob/main/LICENSE) file for details.
+This project is dual-licensed under the [MIT](https://github.com/Shadowcat650/rchess/blob/main/LICENSE-MIT) and [APACHE 2.0](https://github.com/Shadowcat650/rchess/blob/main/LICENSE-APACHE) licenses.
 
 ---
