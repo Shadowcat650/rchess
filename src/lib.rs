@@ -10,5 +10,5 @@ pub use chessboard::{
 };
 
 pub use defs::{
-    BitBoard, CastleSide, Color, Direction, File, Piece, Rank, Square, FILES, RANKS, SQUARES,
+    BitBoard, CastleSide, Color, Direction, File, PieceType, Rank, Square, FILES, RANKS, SQUARES,
 };

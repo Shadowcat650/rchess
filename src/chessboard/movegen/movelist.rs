@@ -1,5 +1,5 @@
 use crate::defs::{BitBoard, Square};
-use crate::{ChessBoard, Color, Piece, Rank};
+use crate::{ChessBoard, Color, PieceType, Rank};
 use std::mem::MaybeUninit;
 
 /// The [`PieceMoves`] struct stores the location of and the squares a piece targets.
@@ -94,7 +94,7 @@ impl MoveList {
             let (moving, _) = chessboard.piece_at(piece_sq).unwrap();
 
             // Pawns have special move cases.
-            if moving == Piece::Pawn {
+            if moving == PieceType::Pawn {
                 // The rank pawn promote on.
                 let promote_rank = match chessboard.turn() {
                     Color::White => BitBoard::from_rank(Rank::Eighth),

@@ -212,7 +212,7 @@ impl<'a> MoveGen<'a> {
         start: Square,
         end: Square,
     ) -> Result<Move, MoveCreationError> {
-        Self::create_promotion_move(chessboard, start, end, Piece::Queen)
+        Self::create_promotion_move(chessboard, start, end, PieceType::Queen)
     }
 
     /// Creates a [`Move`] from a given [`&str`] for the given [`ChessBoard`].
@@ -254,10 +254,10 @@ impl<'a> MoveGen<'a> {
                 .get(4)
                 .ok_or(StrMoveCreationError::InvalidMove)? as char
             {
-                'n' => Piece::Knight,
-                'b' => Piece::Bishop,
-                'r' => Piece::Rook,
-                'q' => Piece::Queen,
+                'n' => PieceType::Knight,
+                'b' => PieceType::Bishop,
+                'r' => PieceType::Rook,
+                'q' => PieceType::Queen,
                 _ => return Err(StrMoveCreationError::InvalidMove),
             };
             Ok(Self::create_promotion_move(chessboard, start, end, target)?)
@@ -275,25 +275,25 @@ impl<'a> MoveGen<'a> {
     ///
     /// # Examples
     /// ```
-    /// use rchess::{ChessBoard, Move, MoveGen, Piece, Square};
+    /// use rchess::{ChessBoard, Move, MoveGen, PieceType, Square};
     ///
     /// // Create a new chess board.
     /// let board = ChessBoard::from_fen("k7/3Q1P2/8/8/8/8/8/K7 w - -").unwrap();
     ///
     /// // Promote pawn to a rook instead of a queen.
-    /// let mv = MoveGen::create_promotion_move(&board, Square::F7, Square::F8, Piece::Rook).unwrap();
-    /// assert_eq!(mv, Move::Promote { start: Square::F7, end: Square::F8, target: Piece::Rook });
+    /// let mv = MoveGen::create_promotion_move(&board, Square::F7, Square::F8, PieceType::Rook).unwrap();
+    /// assert_eq!(mv, Move::Promote { start: Square::F7, end: Square::F8, target: PieceType::Rook });
     ///
     /// // The move might not be a promotion.
-    /// let mv = MoveGen::create_promotion_move(&board, Square::D7, Square::E7, Piece::Rook).unwrap();
-    /// assert_eq!(mv, Move::Quiet { start: Square::D7, end: Square::E7, moving: Piece::Queen });
+    /// let mv = MoveGen::create_promotion_move(&board, Square::D7, Square::E7, PieceType::Rook).unwrap();
+    /// assert_eq!(mv, Move::Quiet { start: Square::D7, end: Square::E7, moving: PieceType::Queen });
     /// ```
     #[inline]
     pub fn create_promotion_move(
         chessboard: &ChessBoard,
         start: Square,
         end: Square,
-        target: Piece,
+        target: PieceType,
     ) -> Result<Move, MoveCreationError> {
         // Make sure the move is legal.
         if !Self::is_legal(chessboard, start, end) {
@@ -316,7 +316,7 @@ impl<'a> MoveGen<'a> {
     ///
     /// # Examples
     /// ```
-    /// use rchess::{ChessBoard, Move, MoveGen, Piece, Square};
+    /// use rchess::{ChessBoard, Move, MoveGen, PieceType, Square};
     ///
     /// // Create a chess board.
     /// let board = ChessBoard::new();
@@ -325,7 +325,7 @@ impl<'a> MoveGen<'a> {
     /// assert!(MoveGen::is_legal(&board, Square::E2, Square::E4));
     ///
     /// // Make the move. // SAFETY: The move is legal.
-    /// let mv = unsafe { MoveGen::create_promotion_move_unchecked(&board, Square::E2, Square::E4, Piece::Queen)};
+    /// let mv = unsafe { MoveGen::create_promotion_move_unchecked(&board, Square::E2, Square::E4, PieceType::Queen)};
     /// assert_eq!(mv, Move::DoublePawnPush { start: Square::E2, end: Square::E4 });
     /// ```
     #[inline]
@@ -333,7 +333,7 @@ impl<'a> MoveGen<'a> {
         chessboard: &ChessBoard,
         start: Square,
         end: Square,
-        target: Piece,
+        target: PieceType,
     ) -> Move {
         // Get extra board info.
         let us = chessboard.turn();
@@ -341,7 +341,7 @@ impl<'a> MoveGen<'a> {
         let (moving, _) = chessboard.piece_at(start).unwrap();
 
         // Look for special pawn moves.
-        if moving == Piece::Pawn {
+        if moving == PieceType::Pawn {
             let (start_rank, double_rank, promote_rank) = match us {
                 Color::White => (Rank::Second, Rank::Fourth, Rank::Eighth),
                 Color::Black => (Rank::Seventh, Rank::Fifth, Rank::First),
@@ -365,7 +365,7 @@ impl<'a> MoveGen<'a> {
             }
         }
         // Look for castles.
-        else if moving == Piece::King {
+        else if moving == PieceType::King {
             let (castle_start, ks_end, qs_end) = match us {
                 Color::White => (Square::E1, Square::G1, Square::C1),
                 Color::Black => (Square::E8, Square::G8, Square::C8),
@@ -492,16 +492,16 @@ impl Iterator for MoveGen<'_> {
             let target = match promote_status {
                 PromoteStatus::PromoteBishop => {
                     self.promote_status = Some(PromoteStatus::PromoteRook);
-                    Piece::Bishop
+                    PieceType::Bishop
                 }
                 PromoteStatus::PromoteRook => {
                     self.promote_status = Some(PromoteStatus::PromoteQueen);
-                    Piece::Rook
+                    PieceType::Rook
                 }
                 PromoteStatus::PromoteQueen => {
                     self.promote_status = None;
                     self.moves.back_mut().unwrap().targets ^= end.bitboard();
-                    Piece::Queen
+                    PieceType::Queen
                 }
             };
 
@@ -520,7 +520,7 @@ impl Iterator for MoveGen<'_> {
 
         // SAFETY: The movegen only contains legal moves.
         let mv = unsafe {
-            Self::create_promotion_move_unchecked(self.chessboard, start, end, Piece::Knight)
+            Self::create_promotion_move_unchecked(self.chessboard, start, end, PieceType::Knight)
         };
 
         // Handle promotion sequence.

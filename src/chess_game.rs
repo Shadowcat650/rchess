@@ -1,6 +1,6 @@
 use crate::chessboard::Footprint;
 use crate::{
-    BitBoard, ChessBoard, Color, FenLoadError, Move, MoveCreationError, MoveGen, Piece, Square,
+    BitBoard, ChessBoard, Color, FenLoadError, Move, MoveCreationError, MoveGen, PieceType, Square,
     StrMoveCreationError,
 };
 use std::collections::HashMap;
@@ -163,8 +163,8 @@ impl ChessGame {
                     reason: DrawReason::InsufficientMaterial,
                 })
             } else if self.state.color_occupancy(Color::Black).popcnt() == 2 {
-                if !self.state.query(Piece::Bishop, Color::Black).is_empty()
-                    || !self.state.query(Piece::Knight, Color::Black).is_empty()
+                if !self.state.query(PieceType::Bishop, Color::Black).is_empty()
+                    || !self.state.query(PieceType::Knight, Color::Black).is_empty()
                 {
                     self.result = Some(GameResult::Draw {
                         reason: DrawReason::InsufficientMaterial,
@@ -175,12 +175,12 @@ impl ChessGame {
             if self.state.color_occupancy(Color::Black).popcnt() == 2 {
                 if self
                     .state
-                    .query(Piece::Bishop, Color::White)
+                    .query(PieceType::Bishop, Color::White)
                     .overlaps(BitBoard::WHITE_SQUARES)
                 {
                     if self
                         .state
-                        .query(Piece::Bishop, Color::Black)
+                        .query(PieceType::Bishop, Color::Black)
                         .overlaps(BitBoard::WHITE_SQUARES)
                     {
                         self.result = Some(GameResult::Draw {
@@ -189,12 +189,12 @@ impl ChessGame {
                     }
                 } else if self
                     .state
-                    .query(Piece::Bishop, Color::White)
+                    .query(PieceType::Bishop, Color::White)
                     .overlaps(BitBoard::BLACK_SQUARES)
                 {
                     if self
                         .state
-                        .query(Piece::Bishop, Color::Black)
+                        .query(PieceType::Bishop, Color::Black)
                         .overlaps(BitBoard::BLACK_SQUARES)
                     {
                         self.result = Some(GameResult::Draw {
@@ -203,8 +203,8 @@ impl ChessGame {
                     }
                 }
             } else if self.state.color_occupancy(Color::Black).popcnt() == 1 {
-                if !self.state.query(Piece::Bishop, Color::White).is_empty()
-                    || !self.state.query(Piece::Knight, Color::White).is_empty()
+                if !self.state.query(PieceType::Bishop, Color::White).is_empty()
+                    || !self.state.query(PieceType::Knight, Color::White).is_empty()
                 {
                     self.result = Some(GameResult::Draw {
                         reason: DrawReason::InsufficientMaterial,
@@ -262,25 +262,25 @@ impl ChessGame {
     ///
     /// # Examples
     /// ```
-    /// use rchess::{ChessGame, Move, Piece, Square};
+    /// use rchess::{ChessGame, Move, PieceType, Square};
     ///
     /// // Create a new chess game.
     /// let game = ChessGame::from_fen("3k4/PK6/8/8/8/8/8/8 w - -").unwrap();
     ///
     /// // Promote to a knight.
-    /// let mv = game.create_promote_move(Square::A7, Square::A8, Piece::Knight).unwrap();
-    /// assert_eq!(mv, Move::Promote { start: Square::A7, end: Square::A8, target: Piece::Knight });
+    /// let mv = game.create_promote_move(Square::A7, Square::A8, PieceType::Knight).unwrap();
+    /// assert_eq!(mv, Move::Promote { start: Square::A7, end: Square::A8, target: PieceType::Knight });
     ///
     /// // Make a normal non-promotion move.
-    /// let mv = game.create_promote_move(Square::B7, Square::B8, Piece::Knight).unwrap();
-    /// assert_eq!(mv, Move::Quiet { start: Square::B7, end: Square::B8, moving: Piece::King });
+    /// let mv = game.create_promote_move(Square::B7, Square::B8, PieceType::Knight).unwrap();
+    /// assert_eq!(mv, Move::Quiet { start: Square::B7, end: Square::B8, moving: PieceType::King });
     /// ```
     #[inline]
     pub fn create_promote_move(
         &self,
         start: Square,
         end: Square,
-        target: Piece,
+        target: PieceType,
     ) -> Result<Move, MoveCreationError> {
         if self.result().is_some() {
             return Err(MoveCreationError);

@@ -18,12 +18,12 @@ pub enum Move {
     Quiet {
         start: Square,
         end: Square,
-        moving: Piece,
+        moving: PieceType,
     },
     Capture {
         start: Square,
         end: Square,
-        moving: Piece,
+        moving: PieceType,
     },
     Castle {
         start: Square,
@@ -41,12 +41,12 @@ pub enum Move {
     Promote {
         start: Square,
         end: Square,
-        target: Piece,
+        target: PieceType,
     },
     PromoteCapture {
         start: Square,
         end: Square,
-        target: Piece,
+        target: PieceType,
     },
 }
 
@@ -208,7 +208,7 @@ impl ChessBoard {
             match c {
                 // Insert a piece.
                 'p' | 'n' | 'b' | 'r' | 'q' | 'k' | 'P' | 'N' | 'B' | 'R' | 'Q' | 'K' => {
-                    let piece = Piece::from_char(c).unwrap();
+                    let piece = PieceType::from_char(c).unwrap();
                     let color = if c.is_ascii_uppercase() {
                         Color::White
                     } else {
@@ -283,12 +283,12 @@ impl ChessBoard {
     ///
     /// # Examples
     /// ```
-    /// use rchess::{BoardBuilder, ChessBoard, Color, Piece, Square};
+    /// use rchess::{BoardBuilder, ChessBoard, Color, PieceType, Square};
     ///
     /// // Create a board builder.
     /// let builder = BoardBuilder::new()
-    ///     .piece(Square::A1, Piece::King, Color::White).unwrap()
-    ///     .piece(Square::H8, Piece::King, Color::Black).unwrap()
+    ///     .piece(Square::A1, PieceType::King, Color::White).unwrap()
+    ///     .piece(Square::H8, PieceType::King, Color::Black).unwrap()
     ///     .turn(Color::Black).unwrap();
     ///
     /// // Convert the builder to a chess board.
@@ -310,7 +310,7 @@ impl ChessBoard {
 
         let turn = board_builder.turn.unwrap();
 
-        if board_builder.piece_bbs[Piece::King.index()].popcnt() != 2 {
+        if board_builder.piece_bbs[PieceType::King.index()].popcnt() != 2 {
             return Err(BuilderConversionError::MissingKing);
         }
 
@@ -321,7 +321,7 @@ impl ChessBoard {
                         return Err(BuilderConversionError::InvalidEnPassant);
                     }
 
-                    if Some((Piece::Pawn, Color::Black))
+                    if Some((PieceType::Pawn, Color::Black))
                         != board_builder.piece_map[sq.down().unwrap().index()]
                     {
                         return Err(BuilderConversionError::InvalidEnPassant);
@@ -332,7 +332,7 @@ impl ChessBoard {
                         return Err(BuilderConversionError::InvalidEnPassant);
                     }
 
-                    if Some((Piece::Pawn, Color::White))
+                    if Some((PieceType::Pawn, Color::White))
                         != board_builder.piece_map[sq.up().unwrap().index()]
                     {
                         return Err(BuilderConversionError::InvalidEnPassant);
@@ -345,8 +345,9 @@ impl ChessBoard {
             .castling_rights
             .is_set(CastleSide::Kingside, Color::White)
         {
-            if board_builder.piece_map[Square::E1.index()] != Some((Piece::King, Color::White))
-                || board_builder.piece_map[Square::H1.index()] != Some((Piece::Rook, Color::White))
+            if board_builder.piece_map[Square::E1.index()] != Some((PieceType::King, Color::White))
+                || board_builder.piece_map[Square::H1.index()]
+                    != Some((PieceType::Rook, Color::White))
             {
                 return Err(BuilderConversionError::InvalidCastleRight);
             }
@@ -356,8 +357,9 @@ impl ChessBoard {
             .castling_rights
             .is_set(CastleSide::Queenside, Color::White)
         {
-            if board_builder.piece_map[Square::E1.index()] != Some((Piece::King, Color::White))
-                || board_builder.piece_map[Square::A1.index()] != Some((Piece::Rook, Color::White))
+            if board_builder.piece_map[Square::E1.index()] != Some((PieceType::King, Color::White))
+                || board_builder.piece_map[Square::A1.index()]
+                    != Some((PieceType::Rook, Color::White))
             {
                 return Err(BuilderConversionError::InvalidCastleRight);
             }
@@ -367,8 +369,9 @@ impl ChessBoard {
             .castling_rights
             .is_set(CastleSide::Kingside, Color::Black)
         {
-            if board_builder.piece_map[Square::E8.index()] != Some((Piece::King, Color::Black))
-                || board_builder.piece_map[Square::H8.index()] != Some((Piece::Rook, Color::Black))
+            if board_builder.piece_map[Square::E8.index()] != Some((PieceType::King, Color::Black))
+                || board_builder.piece_map[Square::H8.index()]
+                    != Some((PieceType::Rook, Color::Black))
             {
                 return Err(BuilderConversionError::InvalidCastleRight);
             }
@@ -378,8 +381,9 @@ impl ChessBoard {
             .castling_rights
             .is_set(CastleSide::Kingside, Color::Black)
         {
-            if board_builder.piece_map[Square::E8.index()] != Some((Piece::King, Color::Black))
-                || board_builder.piece_map[Square::A8.index()] != Some((Piece::Rook, Color::Black))
+            if board_builder.piece_map[Square::E8.index()] != Some((PieceType::King, Color::Black))
+                || board_builder.piece_map[Square::A8.index()]
+                    != Some((PieceType::Rook, Color::Black))
             {
                 return Err(BuilderConversionError::InvalidCastleRight);
             }
@@ -541,9 +545,9 @@ impl ChessBoard {
         match mv {
             Move::Quiet { start, end, moving } => {
                 // Remove relevant castling rights for moving kings or rooks.
-                if moving == Piece::King {
+                if moving == PieceType::King {
                     self.unset_color_rights(us)
-                } else if moving == Piece::Rook {
+                } else if moving == PieceType::Rook {
                     match (us, start) {
                         (Color::Black, Square::A8) => {
                             self.unset_castle_right(CastleSide::Queenside, us)
@@ -559,7 +563,7 @@ impl ChessBoard {
                         }
                         _ => (),
                     }
-                } else if moving == Piece::Pawn {
+                } else if moving == PieceType::Pawn {
                     reset_halfmoves = true;
                 }
 
@@ -567,9 +571,9 @@ impl ChessBoard {
             }
             Move::Capture { start, end, moving } => {
                 // Remove relevant castling rights for moving kings or rooks.
-                if moving == Piece::King {
+                if moving == PieceType::King {
                     self.unset_color_rights(us)
-                } else if moving == Piece::Rook {
+                } else if moving == PieceType::Rook {
                     match (us, start) {
                         (Color::Black, Square::A8) => {
                             self.unset_castle_right(CastleSide::Queenside, us)
@@ -622,10 +626,10 @@ impl ChessBoard {
                 };
 
                 // Move the rook.
-                self.move_piece(rook_start, rook_end, Piece::Rook, us);
+                self.move_piece(rook_start, rook_end, PieceType::Rook, us);
 
                 // Move the king.
-                self.move_piece(start, end, Piece::King, us);
+                self.move_piece(start, end, PieceType::King, us);
 
                 // Unset castling rights for the side that moved.
                 self.unset_color_rights(us);
@@ -638,7 +642,7 @@ impl ChessBoard {
                 };
 
                 // Move the piece.
-                self.move_piece(start, end, Piece::Pawn, us);
+                self.move_piece(start, end, PieceType::Pawn, us);
 
                 reset_halfmoves = true;
             }
@@ -650,7 +654,7 @@ impl ChessBoard {
                 };
 
                 // Move the piece.
-                self.move_piece(start, end, Piece::Pawn, us);
+                self.move_piece(start, end, PieceType::Pawn, us);
 
                 reset_halfmoves = true;
             }
@@ -722,8 +726,9 @@ impl ChessBoard {
         self.pinned = BitBoard::EMPTY;
 
         // Get enemy potential pinners (rooks, bishops, and queens).
-        let enemy_rooks = self.query(Piece::Rook, them) | self.query(Piece::Queen, them);
-        let enemy_bishops = self.query(Piece::Bishop, them) | self.query(Piece::Queen, them);
+        let enemy_rooks = self.query(PieceType::Rook, them) | self.query(PieceType::Queen, them);
+        let enemy_bishops =
+            self.query(PieceType::Bishop, them) | self.query(PieceType::Queen, them);
 
         // Get the enemy pieces pinning our pieces.
         let rook_pinners =
@@ -750,21 +755,21 @@ impl ChessBoard {
 
         // Look for pawn checkers.
         let pawn_check_locations = get_pawn_attacks(king_sq, us);
-        self.checkers |= self.query(Piece::Pawn, them) & pawn_check_locations;
+        self.checkers |= self.query(PieceType::Pawn, them) & pawn_check_locations;
 
         // Look for knight checkers.
         let knight_check_locations = get_knight_attacks(king_sq);
-        self.checkers |= self.query(Piece::Knight, them) & knight_check_locations;
+        self.checkers |= self.query(PieceType::Knight, them) & knight_check_locations;
 
         // Look for bishop & queen checkers.
         let bishop_check_locations = get_bishop_attacks(king_sq, self.occupancy());
-        self.checkers |= (self.query(Piece::Bishop, them) | self.query(Piece::Queen, them))
+        self.checkers |= (self.query(PieceType::Bishop, them) | self.query(PieceType::Queen, them))
             & bishop_check_locations;
 
         // Look for rook & queen checkers.
         let rook_check_locations = get_rook_attacks(king_sq, self.occupancy());
-        self.checkers |=
-            (self.query(Piece::Rook, them) | self.query(Piece::Queen, them)) & rook_check_locations;
+        self.checkers |= (self.query(PieceType::Rook, them) | self.query(PieceType::Queen, them))
+            & rook_check_locations;
     }
 
     /// Returns `true` if the given [`Square`] is attacked by the given [`Color`].
@@ -786,14 +791,17 @@ impl ChessBoard {
 
         // Look for pawn checkers.
         let pawn_check_locations = get_pawn_attacks(square, us);
-        if self.query(Piece::Pawn, by).overlaps(pawn_check_locations) {
+        if self
+            .query(PieceType::Pawn, by)
+            .overlaps(pawn_check_locations)
+        {
             return true;
         }
 
         // Look for knight checkers.
         let knight_check_locations = get_knight_attacks(square);
         if self
-            .query(Piece::Knight, by)
+            .query(PieceType::Knight, by)
             .overlaps(knight_check_locations)
         {
             return true;
@@ -801,13 +809,16 @@ impl ChessBoard {
 
         // Look for king checkers.
         let king_check_locations = get_king_attacks(square);
-        if self.query(Piece::King, by).overlaps(king_check_locations) {
+        if self
+            .query(PieceType::King, by)
+            .overlaps(king_check_locations)
+        {
             return true;
         }
 
         // Look for bishop & queen checkers.
         let bishop_check_locations = get_bishop_attacks(square, self.occupancy());
-        if (self.query(Piece::Bishop, by) | self.query(Piece::Queen, by))
+        if (self.query(PieceType::Bishop, by) | self.query(PieceType::Queen, by))
             .overlaps(bishop_check_locations)
         {
             return true;
@@ -815,7 +826,7 @@ impl ChessBoard {
 
         // Look for rook & queen checkers.
         let rook_check_locations = get_rook_attacks(square, self.occupancy());
-        if (self.query(Piece::Rook, by) | self.query(Piece::Queen, by))
+        if (self.query(PieceType::Rook, by) | self.query(PieceType::Queen, by))
             .overlaps(rook_check_locations)
         {
             return true;
@@ -827,7 +838,7 @@ impl ChessBoard {
     /// Inserts a new piece into the [`ChessBoard`].
     ///
     /// Note: This function assumes that there is not already a piece at the given [`Square`].
-    fn insert(&mut self, square: Square, piece: Piece, color: Color) {
+    fn insert(&mut self, square: Square, piece: PieceType, color: Color) {
         self.piece_bbs[piece.index()] |= square.bitboard();
         self.color_bbs[color.index()] |= square.bitboard();
         self.hash.piece(square, piece, color);
@@ -846,7 +857,7 @@ impl ChessBoard {
     /// Moves a piece from one square to another.
     ///
     /// Note: This function assumes that there is a piece at the start square and that the end square is empty.
-    fn move_piece(&mut self, start: Square, end: Square, piece: Piece, color: Color) {
+    fn move_piece(&mut self, start: Square, end: Square, piece: PieceType, color: Color) {
         self.piece_bbs[piece.index()] ^= start.bitboard() | end.bitboard();
         self.color_bbs[color.index()] ^= start.bitboard() | end.bitboard();
         self.hash.piece(start, piece, color);
@@ -897,17 +908,17 @@ impl ChessBoard {
     ///
     /// # Examples
     /// ```
-    /// use rchess::{ChessBoard, Square, Piece, Color};
+    /// use rchess::{ChessBoard, Square, PieceType, Color};
     ///
     /// // Create a new chess board.
     /// let board = ChessBoard::new();
     ///
-    /// assert_eq!(board.piece_at(Square::A1), Some((Piece::Rook, Color::White)));
-    /// assert_eq!(board.piece_at(Square::A8), Some((Piece::Rook, Color::Black)));
+    /// assert_eq!(board.piece_at(Square::A1), Some((PieceType::Rook, Color::White)));
+    /// assert_eq!(board.piece_at(Square::A8), Some((PieceType::Rook, Color::Black)));
     /// assert_eq!(board.piece_at(Square::E5), None);
     /// ```
     #[inline]
-    pub fn piece_at(&self, square: Square) -> Option<(Piece, Color)> {
+    pub fn piece_at(&self, square: Square) -> Option<(PieceType, Color)> {
         let color = if self.color_bbs[Color::White.index()].overlaps(square.bitboard()) {
             Color::White
         } else if self.color_bbs[Color::Black.index()].overlaps(square.bitboard()) {
@@ -916,24 +927,24 @@ impl ChessBoard {
             return None;
         };
 
-        let pnr = self.piece_bbs[Piece::Pawn.index()]
-            | self.piece_bbs[Piece::Knight.index()]
-            | self.piece_bbs[Piece::Rook.index()];
+        let pnr = self.piece_bbs[PieceType::Pawn.index()]
+            | self.piece_bbs[PieceType::Knight.index()]
+            | self.piece_bbs[PieceType::Rook.index()];
         let piece = if pnr.overlaps(square.bitboard()) {
-            if self.piece_bbs[Piece::Pawn.index()].overlaps(square.bitboard()) {
-                Piece::Pawn
-            } else if self.piece_bbs[Piece::Knight.index()].overlaps(square.bitboard()) {
-                Piece::Knight
+            if self.piece_bbs[PieceType::Pawn.index()].overlaps(square.bitboard()) {
+                PieceType::Pawn
+            } else if self.piece_bbs[PieceType::Knight.index()].overlaps(square.bitboard()) {
+                PieceType::Knight
             } else {
-                Piece::Rook
+                PieceType::Rook
             }
         } else {
-            if self.piece_bbs[Piece::Bishop.index()].overlaps(square.bitboard()) {
-                Piece::Bishop
-            } else if self.piece_bbs[Piece::Queen.index()].overlaps(square.bitboard()) {
-                Piece::Queen
+            if self.piece_bbs[PieceType::Bishop.index()].overlaps(square.bitboard()) {
+                PieceType::Bishop
+            } else if self.piece_bbs[PieceType::Queen.index()].overlaps(square.bitboard()) {
+                PieceType::Queen
             } else {
-                Piece::King
+                PieceType::King
             }
         };
 
@@ -942,7 +953,7 @@ impl ChessBoard {
 
     /// Gets a [`BitBoard`] containing the locations of all the pieces of a given piece type and color.
     #[inline]
-    pub fn query(&self, piece: Piece, color: Color) -> BitBoard {
+    pub fn query(&self, piece: PieceType, color: Color) -> BitBoard {
         self.piece_bbs[piece.index()] & self.color_bbs[color.index()]
     }
 
@@ -960,7 +971,7 @@ impl ChessBoard {
 
     /// Gets a [`BitBoard`] containing the locations of all the pieces of a given piece type.
     #[inline]
-    pub fn piece_occupancy(&self, piece: Piece) -> BitBoard {
+    pub fn piece_occupancy(&self, piece: PieceType) -> BitBoard {
         self.piece_bbs[piece.index()]
     }
 
@@ -991,7 +1002,7 @@ impl ChessBoard {
     /// Gets the square of the king of a given [`Color`] on the [`ChessBoard`].
     #[inline]
     pub fn get_king_square(&self, color: Color) -> Square {
-        self.query(Piece::King, color).b_scan_forward().unwrap()
+        self.query(PieceType::King, color).b_scan_forward().unwrap()
     }
 
     /// Gets the checkers.

@@ -1,6 +1,6 @@
-/// The [`Piece`] enum represents a chess piece.
+/// The [`PieceType`] enum represents a type of chess piece.
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
-pub enum Piece {
+pub enum PieceType {
     Pawn,
     Knight,
     Bishop,
@@ -9,15 +9,15 @@ pub enum Piece {
     King,
 }
 
-impl Piece {
-    /// Gets the lowercase character representation of the [`Piece`].
+impl PieceType {
+    /// Gets the lowercase character representation of the [`PieceType`].
     ///
     /// # Examples
     /// ```
-    /// use rchess::Piece;
+    /// use rchess::PieceType;
     ///
-    /// assert_eq!(Piece::Pawn.to_char(), 'p');
-    /// assert_eq!(Piece::King.to_char(), 'k');
+    /// assert_eq!(PieceType::Pawn.to_char(), 'p');
+    /// assert_eq!(PieceType::King.to_char(), 'k');
     /// ```
     #[inline]
     pub const fn to_char(self) -> char {
@@ -31,38 +31,38 @@ impl Piece {
         }
     }
 
-    /// Creates a new [`Piece`] from a given [`char`].
+    /// Creates a new [`PieceType`] from a given [`char`].
     ///
     /// # Examples
     /// ```
-    /// use rchess::Piece;
+    /// use rchess::PieceType;
     ///
-    /// assert_eq!(Piece::from_char('p'), Some(Piece::Pawn));
-    /// assert_eq!(Piece::from_char('K'), Some(Piece::King));
-    /// assert_eq!(Piece::from_char('-'), None);
+    /// assert_eq!(PieceType::from_char('p'), Some(PieceType::Pawn));
+    /// assert_eq!(PieceType::from_char('K'), Some(PieceType::King));
+    /// assert_eq!(PieceType::from_char('-'), None);
     /// ```
     #[inline]
     pub const fn from_char(c: char) -> Option<Self> {
         match c {
-            'p' | 'P' => Some(Piece::Pawn),
-            'n' | 'N' => Some(Piece::Knight),
-            'b' | 'B' => Some(Piece::Bishop),
-            'r' | 'R' => Some(Piece::Rook),
-            'q' | 'Q' => Some(Piece::Queen),
-            'k' | 'K' => Some(Piece::King),
+            'p' | 'P' => Some(PieceType::Pawn),
+            'n' | 'N' => Some(PieceType::Knight),
+            'b' | 'B' => Some(PieceType::Bishop),
+            'r' | 'R' => Some(PieceType::Rook),
+            'q' | 'Q' => Some(PieceType::Queen),
+            'k' | 'K' => Some(PieceType::King),
             _ => None,
         }
     }
 
-    /// Gets a [`usize`] used to index arrays by the [`Piece`].
+    /// Gets a [`usize`] used to index arrays by the [`PieceType`].
     ///
     /// # Examples
     /// ```no_run
-    /// use rchess::Piece;
+    /// use rchess::PieceType;
     ///
     /// let mut piece_counts = [0;6];
-    /// piece_counts[Piece::Pawn.index()] = 16;
-    /// piece_counts[Piece::Knight.index()] = 2;
+    /// piece_counts[PieceType::Pawn.index()] = 16;
+    /// piece_counts[PieceType::Knight.index()] = 2;
     /// ```
     #[inline]
     pub const fn index(&self) -> usize {

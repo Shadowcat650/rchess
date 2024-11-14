@@ -1,5 +1,4 @@
-use rchess::File::C;
-use rchess::{BoardBuilder, ChessBoard, Color, Piece, Square};
+use rchess::{BoardBuilder, ChessBoard, Color, PieceType, Square};
 
 #[test]
 fn start_pos() {
@@ -10,9 +9,9 @@ fn start_pos() {
 #[test]
 fn double_insert() {
     let board = BoardBuilder::new()
-        .piece(Square::A1, Piece::Rook, Color::Black)
+        .piece(Square::A1, PieceType::Rook, Color::Black)
         .unwrap()
-        .piece(Square::A1, Piece::Knight, Color::Black); // oops
+        .piece(Square::A1, PieceType::Knight, Color::Black); // oops
     assert!(board.is_err());
 }
 

@@ -22,7 +22,7 @@ impl ZobristHash {
 
     /// Adds/removes a piece from a square in the [`ZobristHash`].
     #[inline]
-    pub(super) fn piece(&mut self, square: Square, piece: Piece, color: Color) {
+    pub(super) fn piece(&mut self, square: Square, piece: PieceType, color: Color) {
         self.0 ^= PIECE_ZOBRIST[color.index()][piece.index()][square.index()];
     }
 

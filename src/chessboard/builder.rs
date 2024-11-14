@@ -29,7 +29,7 @@ pub enum BoardBuilderError {
 /// The [`BoardBuilder`] struct helps construct a [`ChessBoard`].
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub struct BoardBuilder {
-    pub(super) piece_map: [Option<(Piece, Color)>; 64],
+    pub(super) piece_map: [Option<(PieceType, Color)>; 64],
     pub(super) piece_bbs: [BitBoard; 6],
     pub(super) color_bbs: [BitBoard; 2],
     pub(super) turn: Option<Color>,
@@ -57,25 +57,26 @@ impl BoardBuilder {
     ///
     /// # Examples
     /// ```
-    /// use rchess::{BoardBuilder, Color, Piece, Square};
+    /// use rchess::{BoardBuilder, Color, PieceType, Square};
     ///
     /// // Create a new board builder with two kings.
     /// let builder = BoardBuilder::new()
-    ///     .piece(Square::A1, Piece::King, Color::White).unwrap()
-    ///     .piece(Square::H8, Piece::King, Color::Black).unwrap();
+    ///     .piece(Square::A1, PieceType::King, Color::White).unwrap()
+    ///     .piece(Square::H8, PieceType::King, Color::Black).unwrap();
     /// ```
     #[inline]
     pub fn piece(
         mut self,
         square: Square,
-        piece: Piece,
+        piece: PieceType,
         color: Color,
     ) -> Result<Self, BoardBuilderError> {
-        if piece == Piece::King {
-            if !(self.piece_bbs[Piece::King.index()] & self.color_bbs[color.index()]).is_empty() {
+        if piece == PieceType::King {
+            if !(self.piece_bbs[PieceType::King.index()] & self.color_bbs[color.index()]).is_empty()
+            {
                 return Err(BoardBuilderError::TwoKings);
             }
-        } else if piece == Piece::Pawn {
+        } else if piece == PieceType::Pawn {
             match color {
                 Color::White => {
                     if square.rank() == Rank::Eighth {
@@ -181,12 +182,12 @@ impl BoardBuilder {
     ///
     /// # Examples
     /// ```no_run
-    /// use rchess::{BoardBuilder, Color, Piece, Square};
+    /// use rchess::{BoardBuilder, Color, PieceType, Square};
     ///
     /// // Create a new chess board with two kings with black to move.
     /// let builder = BoardBuilder::new()
-    ///     .piece(Square::A1, Piece::King, Color::White).unwrap()
-    ///     .piece(Square::H8, Piece::King, Color::Black).unwrap()
+    ///     .piece(Square::A1, PieceType::King, Color::White).unwrap()
+    ///     .piece(Square::H8, PieceType::King, Color::Black).unwrap()
     ///     .turn(Color::Black).unwrap()
     ///     .finish().unwrap();
     /// ```
