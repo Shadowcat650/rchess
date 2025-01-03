@@ -1,6 +1,7 @@
 mod chess_game;
 mod chessboard;
 mod defs;
+mod mask_gen;
 
 pub use chess_game::{ChessGame, DrawReason, GameResult};
 

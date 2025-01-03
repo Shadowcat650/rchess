@@ -3,6 +3,7 @@ use std::fs::File;
 use std::path::Path;
 
 mod defs;
+mod mask_gen;
 mod table_gen;
 
 /// Generates computed tables at compile-time.

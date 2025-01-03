@@ -11,6 +11,10 @@ keywords = ["chess", "board", "chessboard"]
 categories = ["data-structures"]
 build = "src/build.rs"
 
+[features]
+default = []
+magic-table = []
+
 [[bench]]
 name = "perfts"
 harness = false

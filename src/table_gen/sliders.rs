@@ -1,4 +1,5 @@
 use crate::defs::*;
+use crate::mask_gen::sliders::{get_bishop_attacks_slow, get_rook_attacks_slow};
 use crate::table_gen::general::RAYS;
 use fastrand::Rng;
 use lazy_static::lazy_static;
@@ -55,7 +56,7 @@ fn generate_bishop_magics() -> (Box<[Magic; 64]>, usize) {
         let shift = 64 - BISHOP_BITS[square.index()];
         let occupancy_attacks = Occupancies::new(mask)
             .into_iter()
-            .map(|occupancy| (occupancy, get_bishop_attacks_slow(square, occupancy)))
+            .map(|occupancy| (occupancy, get_bishop_attacks_slow(&RAYS, square, occupancy)))
             .collect::<Vec<_>>();
 
         let mut candidate;
@@ -102,7 +103,7 @@ fn generate_rook_magics() -> (Box<[Magic; 64]>, usize) {
         let mask = get_rook_mask(square);
         let occupancy_attacks = Occupancies::new(mask)
             .into_iter()
-            .map(|occupancy| (occupancy, get_rook_attacks_slow(square, occupancy)))
+            .map(|occupancy| (occupancy, get_rook_attacks_slow(&RAYS, square, occupancy)))
             .collect::<Vec<_>>();
 
         let mut candidate;
@@ -148,7 +149,7 @@ fn generate_bishop_attacks() -> Vec<BitBoard> {
     for square in SQUARES {
         let blocker_occupancies = Occupancies::new(get_bishop_mask(square));
         for occupancy in blocker_occupancies {
-            let attacks = get_bishop_attacks_slow(square, occupancy);
+            let attacks = get_bishop_attacks_slow(&RAYS, square, occupancy);
             let key = BISHOP_MAGICS.0[square.index()].key(occupancy);
             bishop_attacks[key] = attacks;
         }
@@ -163,7 +164,7 @@ fn generate_rook_attacks() -> Vec<BitBoard> {
     for square in SQUARES {
         let blocker_occupancies = Occupancies::new(get_rook_mask(square));
         for occupancy in blocker_occupancies {
-            let attacks = get_rook_attacks_slow(square, occupancy);
+            let attacks = get_rook_attacks_slow(&RAYS, square, occupancy);
             let key = ROOK_MAGICS.0[square.index()].key(occupancy);
             rook_attacks[key] = attacks;
         }
@@ -174,7 +175,7 @@ fn generate_rook_attacks() -> Vec<BitBoard> {
 
 /// Gets the bishop blocker mask.
 fn get_bishop_mask(square: Square) -> BitBoard {
-    let mut mask = get_bishop_attacks_slow(square, BitBoard::EMPTY);
+    let mut mask = get_bishop_attacks_slow(&RAYS, square, BitBoard::EMPTY);
 
     mask &= !BitBoard::from_rank(Rank::First);
     mask &= !BitBoard::from_rank(Rank::Eighth);
@@ -186,7 +187,7 @@ fn get_bishop_mask(square: Square) -> BitBoard {
 
 /// Gets the rook blocker mask.
 fn get_rook_mask(square: Square) -> BitBoard {
-    let mut mask = get_rook_attacks_slow(square, BitBoard::EMPTY);
+    let mut mask = get_rook_attacks_slow(&RAYS, square, BitBoard::EMPTY);
 
     if square.rank() != Rank::First {
         mask &= !BitBoard::from_rank(Rank::First);
@@ -205,48 +206,6 @@ fn get_rook_mask(square: Square) -> BitBoard {
     }
 
     mask
-}
-
-/// Gets bishop seen squares without magic bitboards.
-pub(crate) fn get_bishop_attacks_slow(square: Square, occupancy: BitBoard) -> BitBoard {
-    let mut attacks = BitBoard::EMPTY;
-
-    attacks |= ray_attacks(square, Direction::UpLeft, occupancy);
-    attacks |= ray_attacks(square, Direction::UpRight, occupancy);
-    attacks |= ray_attacks(square, Direction::DownLeft, occupancy);
-    attacks |= ray_attacks(square, Direction::DownRight, occupancy);
-
-    attacks
-}
-
-/// Gets rook seen squares without magic bitboards.
-pub(crate) fn get_rook_attacks_slow(square: Square, occupancy: BitBoard) -> BitBoard {
-    let mut attacks = BitBoard::EMPTY;
-
-    attacks |= ray_attacks(square, Direction::Up, occupancy);
-    attacks |= ray_attacks(square, Direction::Down, occupancy);
-    attacks |= ray_attacks(square, Direction::Left, occupancy);
-    attacks |= ray_attacks(square, Direction::Right, occupancy);
-
-    attacks
-}
-
-/// Gets the attacks in a given direction.
-fn ray_attacks(square: Square, dir: Direction, occupancy: BitBoard) -> BitBoard {
-    let mut attacks = RAYS[square.index()][dir.index()];
-    let blockers = attacks & occupancy;
-    if !blockers.is_empty() {
-        let blocker_square = match dir {
-            Direction::Up | Direction::Right | Direction::UpLeft | Direction::UpRight => {
-                blockers.b_scan_forward().unwrap()
-            }
-            Direction::Down | Direction::Left | Direction::DownLeft | Direction::DownRight => {
-                blockers.b_scan_reverse().unwrap()
-            }
-        };
-        attacks ^= RAYS[blocker_square.index()][dir.index()];
-    }
-    return attacks;
 }
 
 /// The [`Occupancies`] struct iterates through all occupancies for a mask.

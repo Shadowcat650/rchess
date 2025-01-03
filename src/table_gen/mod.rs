@@ -4,7 +4,7 @@ mod sliders;
 mod zobrist;
 
 use crate::defs::*;
-use crate::table_gen::general::{AXIS_CONNECTIONS, DIRECT_CONNECTIONS};
+use crate::table_gen::general::{AXIS_CONNECTIONS, DIRECT_CONNECTIONS, RAYS};
 use crate::table_gen::leapers::{KING_ATTACKS, KNIGHT_ATTACKS, PAWN_ATTACKS};
 use crate::table_gen::sliders::{BISHOP_ATTACKS, BISHOP_MAGICS, ROOK_ATTACKS, ROOK_MAGICS};
 use crate::table_gen::zobrist::{
@@ -29,9 +29,17 @@ pub fn generate_tables(f: &mut File) {
         KNIGHT_ATTACKS,
         KING_ATTACKS,
         DIRECT_CONNECTIONS,
-        AXIS_CONNECTIONS
+        AXIS_CONNECTIONS,
+        RAYS
     );
 
+    #[cfg(feature = "magic-table")]
+    {
+        generate_magic_tables(f);
+    }
+}
+
+fn generate_magic_tables(f: &mut File) {
     writeln!(f, "const BISHOP_MAGICS: [Magic; 64] = [").unwrap();
     BISHOP_MAGICS.0.iter().for_each(|magic| {
         writeln!(

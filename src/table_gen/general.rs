@@ -1,5 +1,5 @@
 use crate::defs::*;
-use crate::table_gen::sliders::{get_bishop_attacks_slow, get_rook_attacks_slow};
+use crate::mask_gen::sliders::{get_bishop_attacks_slow, get_rook_attacks_slow};
 use lazy_static::lazy_static;
 
 lazy_static! {
@@ -41,14 +41,14 @@ fn generate_direct_connections() -> Box<[[BitBoard; 64]; 64]> {
 
             let occupancy = start_bb | end_bb;
 
-            let bishop_attacks = get_bishop_attacks_slow(start_sq, occupancy);
-            let rook_attacks = get_rook_attacks_slow(start_sq, occupancy);
+            let bishop_attacks = get_bishop_attacks_slow(&RAYS, start_sq, occupancy);
+            let rook_attacks = get_rook_attacks_slow(&RAYS, start_sq, occupancy);
 
             let connection = if bishop_attacks.overlaps(end_bb) {
-                let square2_attacks = get_bishop_attacks_slow(end_sq, occupancy);
+                let square2_attacks = get_bishop_attacks_slow(&RAYS, end_sq, occupancy);
                 bishop_attacks & square2_attacks
             } else if rook_attacks.overlaps(end_bb) {
-                let square2_attacks = get_rook_attacks_slow(end_sq, occupancy);
+                let square2_attacks = get_rook_attacks_slow(&RAYS, end_sq, occupancy);
                 rook_attacks & square2_attacks
             } else {
                 BitBoard::EMPTY
@@ -71,17 +71,20 @@ fn generate_axis_connections() -> Box<[[BitBoard; 64]; 64]> {
         for end_sq in SQUARES {
             let end_bb = end_sq.bitboard();
 
-            let bishop_attacks = get_bishop_attacks_slow(start_sq, BitBoard::EMPTY) | start_bb;
-            let rook_attacks = get_rook_attacks_slow(start_sq, BitBoard::EMPTY) | start_bb;
+            let bishop_attacks =
+                get_bishop_attacks_slow(&RAYS, start_sq, BitBoard::EMPTY) | start_bb;
+            let rook_attacks = get_rook_attacks_slow(&RAYS, start_sq, BitBoard::EMPTY) | start_bb;
 
             let mut connection = BitBoard::EMPTY;
             if bishop_attacks.overlaps(end_bb) {
-                let square2_attacks = get_bishop_attacks_slow(end_sq, BitBoard::EMPTY) | end_bb;
+                let square2_attacks =
+                    get_bishop_attacks_slow(&RAYS, end_sq, BitBoard::EMPTY) | end_bb;
                 connection |= bishop_attacks & square2_attacks;
             }
 
             if rook_attacks.overlaps(end_bb) {
-                let square2_attacks = get_rook_attacks_slow(end_sq, BitBoard::EMPTY) | end_bb;
+                let square2_attacks =
+                    get_rook_attacks_slow(&RAYS, end_sq, BitBoard::EMPTY) | end_bb;
                 connection |= rook_attacks & square2_attacks;
             }
 

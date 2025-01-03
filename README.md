@@ -40,8 +40,16 @@ fn main() {
 }
 ```
 
+### Features
+
+By default, no features are enabled.
+
+To use magic bitboards for sliding piece move generation, enable the `magic-table` feature. On my device, this feature speeds up the benches by around 18%.
+
+Build times will be faster without the `magic-table` feature enabled.
+
 ### Improving Build Time
-To improve the slow build time, which is caused by generating bitboard magics, set your build override opt-level to 3.
+To improve the slow build time when the `magic-table` is enabled, set your build override opt-level to 3.
 ```toml
 [profile.dev.build-override]
 opt-level = 3
