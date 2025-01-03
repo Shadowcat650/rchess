@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 2.1.0
 - Add feature flag for magic bitboard move generation.
 
 ## 2.0.0
