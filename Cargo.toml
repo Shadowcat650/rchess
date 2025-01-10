@@ -7,8 +7,8 @@ description = "A Chess Library Written In Rust"
 repository = "https://github.com/Shadowcat650/rchess"
 documentation = "https://docs.rs/rchess/2.2.0/rchess/"
 readme = "README.md"
-keywords = ["chess", "board", "game", "chessboard", "chessgame"]
-categories = []
+keywords = ["chess", "board", "chessboard", "chessgame", "move-generation"]
+categories = ["games"]
 build = "src/build.rs"
 
 [features]
