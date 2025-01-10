@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.2.0
+- Add `MoveGen::piece_captures` and `MoveGen::piece_legal` which get a move bitboard for a single piece.
+
 ## 2.1.0
 - Add feature flag for magic bitboard move generation.
 

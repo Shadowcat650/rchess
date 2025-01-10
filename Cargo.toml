@@ -1,11 +1,11 @@
 [package]
 name = "rchess"
-version = "2.1.0"
+version = "2.2.0"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 description = "A Chess Library Written In Rust"
 repository = "https://github.com/Shadowcat650/rchess"
-documentation = "https://docs.rs/rchess/2.1.0/rchess/"
+documentation = "https://docs.rs/rchess/2.2.0/rchess/"
 readme = "README.md"
 keywords = ["chess", "board", "game", "chessboard", "chessgame"]
 categories = []
