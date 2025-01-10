@@ -28,20 +28,27 @@ pub fn generate_moves<const CAPTURES_ONLY: bool>(chessboard: &ChessBoard) -> Mov
         generate_queen_moves::<CAPTURES_ONLY, true>(&mut moves, chessboard);
     } else {
         // The king is checked by multiple pieces.
-        generate_king_moves::<CAPTURES_ONLY, true>(&mut moves, chessboard);
+        generate_king_moves::<false, true>(&mut moves, chessboard);
     }
 
     moves
 }
 
-/// Gets a [`BitBoard`] with all the legal moves for a piece on the given square.
+/// Gets a [`BitBoard`] of moves for the piece on the given [`Square`].
 ///
-/// If there was no piece on the square, an empty [`BitBoard`] is returned.
-pub fn generate_square_legal(chessboard: &ChessBoard, square: Square) -> BitBoard {
+/// If there was no piece on the square, or it is not that piece's turn, an empty [`BitBoard`] is returned.
+pub fn generate_square_moves<const CAPTURES_ONLY: bool>(
+    chessboard: &ChessBoard,
+    square: Square,
+) -> BitBoard {
     let piece = match chessboard.piece_at(square) {
         None => return BitBoard::EMPTY,
         Some(piece) => piece,
     };
+
+    if piece.color != chessboard.turn() {
+        return BitBoard::EMPTY;
+    }
 
     if chessboard.checkers().popcnt() > 1 {
         if piece.kind != PieceType::King {
@@ -55,21 +62,27 @@ pub fn generate_square_legal(chessboard: &ChessBoard, square: Square) -> BitBoar
 
     if chessboard.checkers().is_empty() {
         match piece.kind {
-            PieceType::Pawn => generate_pawn_attacks::<false, false>(chessboard, square),
-            PieceType::Knight => generate_knight_attacks::<false, false, false>(chessboard, square),
-            PieceType::Bishop => generate_bishop_attacks::<false, false>(chessboard, square),
-            PieceType::Rook => generate_rook_attacks::<false, false>(chessboard, square),
-            PieceType::Queen => generate_queen_attacks::<false, false>(chessboard, square),
-            PieceType::King => generate_king_attacks::<false, false>(chessboard, square),
+            PieceType::Pawn => generate_pawn_attacks::<CAPTURES_ONLY, false>(chessboard, square),
+            PieceType::Knight => {
+                generate_knight_attacks::<CAPTURES_ONLY, false, false>(chessboard, square)
+            }
+            PieceType::Bishop => {
+                generate_bishop_attacks::<CAPTURES_ONLY, false>(chessboard, square)
+            }
+            PieceType::Rook => generate_rook_attacks::<CAPTURES_ONLY, false>(chessboard, square),
+            PieceType::Queen => generate_queen_attacks::<CAPTURES_ONLY, false>(chessboard, square),
+            PieceType::King => generate_king_attacks::<CAPTURES_ONLY, false>(chessboard, square),
         }
     } else {
         match piece.kind {
-            PieceType::Pawn => generate_pawn_attacks::<false, true>(chessboard, square),
-            PieceType::Knight => generate_knight_attacks::<false, true, false>(chessboard, square),
-            PieceType::Bishop => generate_bishop_attacks::<false, true>(chessboard, square),
-            PieceType::Rook => generate_rook_attacks::<false, true>(chessboard, square),
-            PieceType::Queen => generate_queen_attacks::<false, true>(chessboard, square),
-            PieceType::King => generate_king_attacks::<false, true>(chessboard, square),
+            PieceType::Pawn => generate_pawn_attacks::<CAPTURES_ONLY, true>(chessboard, square),
+            PieceType::Knight => {
+                generate_knight_attacks::<CAPTURES_ONLY, true, false>(chessboard, square)
+            }
+            PieceType::Bishop => generate_bishop_attacks::<CAPTURES_ONLY, true>(chessboard, square),
+            PieceType::Rook => generate_rook_attacks::<CAPTURES_ONLY, true>(chessboard, square),
+            PieceType::Queen => generate_queen_attacks::<CAPTURES_ONLY, true>(chessboard, square),
+            PieceType::King => generate_king_attacks::<CAPTURES_ONLY, true>(chessboard, square),
         }
     }
 }

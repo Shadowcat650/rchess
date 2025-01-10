@@ -1,5 +1,5 @@
 use super::movelist::MoveList;
-use crate::chessboard::movegen::generator::{generate_moves, generate_square_legal};
+use crate::chessboard::movegen::generator::{generate_moves, generate_square_moves};
 use crate::chessboard::{ChessBoard, Move};
 use crate::defs::*;
 use std::ops::Index;
@@ -55,11 +55,40 @@ impl<'a> MoveGen<'a> {
     pub fn legal(chessboard: &'a ChessBoard) -> Self {
         let moves = generate_moves::<false>(chessboard);
 
-        MoveGen {
+        Self {
             chessboard,
             moves,
             promote_status: None,
         }
+    }
+
+    /// Gets a [`BitBoard`] of legal moves for the [`Piece`] on the given [`Square`].
+    ///
+    /// If there was no [`Piece`] on the given [`Square`], or it was not that [`Piece`]'s turn, an
+    /// empty [`BitBoard`] is returned.
+    ///
+    /// # Examples
+    /// ```
+    /// use rchess::{BitBoard, ChessBoard, MoveGen, Square};
+    ///
+    /// // Create a chess board.
+    /// let board = ChessBoard::from_fen("5r2/pp3p1k/1qr1p2p/3p3P/3b1P2/2NP4/PP1Q1PR1/2K5 b - -").unwrap();
+    ///
+    /// // Get the queen moves for that position.
+    /// let queen_moves = MoveGen::piece_legal(&board, Square::B6);
+    ///
+    /// // There should be 9 queen moves.
+    /// assert_eq!(queen_moves.popcnt(), 9);
+    ///
+    /// // There are no moves since there is not a piece on this square.
+    /// assert_eq!(MoveGen::piece_legal(&board, Square::A1), BitBoard::EMPTY);
+    ///
+    /// // It is black to move, so no moves are generated for the white pawn.
+    /// assert_eq!(MoveGen::piece_legal(&board, Square::B2), BitBoard::EMPTY);
+    /// ```
+    #[inline]
+    pub fn piece_legal(chessboard: &'a ChessBoard, square: Square) -> BitBoard {
+        generate_square_moves::<false>(chessboard, square)
     }
 
     /// Creates a new [`MoveGen`] that generates only capture moves and king-defending moves.
@@ -82,11 +111,54 @@ impl<'a> MoveGen<'a> {
     pub fn captures_only(chessboard: &'a ChessBoard) -> Self {
         let moves = generate_moves::<true>(chessboard);
 
-        MoveGen {
+        Self {
             chessboard,
             moves,
             promote_status: None,
         }
+    }
+
+    /// Gets a [`BitBoard`] of captures moves and king-defending moves for the [`Piece`] on the
+    /// given [`Square`].
+    ///
+    /// If there was no [`Piece`] on the given [`Square`], or it was not that [`Piece`]'s turn, an
+    /// empty [`BitBoard`] is returned.
+    ///
+    /// # Examples
+    /// ```
+    /// use rchess::{BitBoard, ChessBoard, MoveGen, Square};
+    ///
+    /// // Create a chess board.
+    /// let board = ChessBoard::from_fen("6k1/5r1p/1Q4p1/5p2/8/p1P5/PP3P2/1K3R1R w - -").unwrap();
+    ///
+    /// // Get the rook captures for that position.
+    /// let rook_captures = MoveGen::piece_captures(&board, Square::H1);
+    ///
+    /// // There should be 1 rook capture.
+    /// assert_eq!(rook_captures.popcnt(), 1);
+    ///
+    /// // There are no moves since there is not a piece on this square.
+    /// assert_eq!(MoveGen::piece_captures(&board, Square::D5), BitBoard::EMPTY);
+    ///
+    /// // It is white to move, so no moves are generated for the black pawn.
+    /// assert_eq!(MoveGen::piece_captures(&board, Square::A3), BitBoard::EMPTY);
+    /// ```
+    ///
+    /// ```
+    /// use rchess::{ChessBoard, MoveGen, Square};
+    ///
+    /// // Create a chess board.
+    /// let board = ChessBoard::from_fen("6k1/6rp/4Q1p1/8/8/P1P2p2/P4P2/1K3R1R b - -").unwrap();
+    ///
+    /// // Get the king captures for that position.
+    /// let king_captures = MoveGen::piece_captures(&board, Square::G8);
+    ///
+    /// // There are 2 evasions moves that the king has (no capture moves for the king).
+    /// assert_eq!(king_captures.popcnt(), 2);
+    /// ```
+    #[inline]
+    pub fn piece_captures(chessboard: &'a ChessBoard, square: Square) -> BitBoard {
+        generate_square_moves::<true>(chessboard, square)
     }
 
     /// Turns the [`MoveGen`] into a [`Vec<Move>`].
@@ -164,7 +236,7 @@ impl<'a> MoveGen<'a> {
         self.moves.count_moves(self.chessboard)
     }
 
-    /// Checks if a move with a given start and end square is legal for a chess board.
+    /// Checks if a move with a given start and end [`Square`] is legal for a [`ChessBoard`].
     ///
     /// # Examples
     /// ```
@@ -178,10 +250,13 @@ impl<'a> MoveGen<'a> {
     ///
     /// // Check if the move "e1e2" is legal.
     /// assert!(!MoveGen::is_legal(&board, Square::E1, Square::E2));
+    ///
+    /// // Check if the move "b7b6" is legal.
+    /// assert!(!MoveGen::is_legal(&board, Square::B7, Square::B6));
     /// ```
     #[inline]
     pub fn is_legal(chessboard: &ChessBoard, start: Square, end: Square) -> bool {
-        let sq_legal_moves = generate_square_legal(chessboard, start);
+        let sq_legal_moves = generate_square_moves::<false>(chessboard, start);
         sq_legal_moves.contains(end)
     }
 
