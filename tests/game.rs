@@ -41,7 +41,7 @@ fn checkmate_black() {
 
 #[test]
 fn checkmate_white() {
-    let mut game = ChessGame::from_fen("R5k1/8/6K1/8/8/8/8/8 b - -").unwrap();
+    let game = ChessGame::from_fen("R5k1/8/6K1/8/8/8/8/8 b - -").unwrap();
     assert_eq!(game.result(), Some(GameResult::WhiteWins));
 }
 
