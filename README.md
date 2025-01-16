@@ -20,7 +20,7 @@ Add the following to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-rchess = "2.2.1"
+rchess = "2.3.0"
 ```
 
 ### Usage Example
@@ -47,6 +47,8 @@ By default, no features are enabled.
 To use magic bitboards for sliding piece move generation, enable the `magic-table` feature. On my device, this feature speeds up the benches by around 18%.
 
 Build times will be faster without the `magic-table` feature enabled.
+
+Use the `serde` feature to enable serialization and deserialization.
 
 ### Improving Build Time
 To improve the slow build time when the `magic-table` is enabled, set your build override opt-level to 3.
