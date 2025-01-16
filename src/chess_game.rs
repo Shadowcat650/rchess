@@ -7,6 +7,7 @@ use std::collections::HashMap;
 
 /// The [`GameResult`] enum represents the result of a chess game.
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum GameResult {
     WhiteWins,
     BlackWins,
@@ -15,6 +16,7 @@ pub enum GameResult {
 
 /// The [`DrawReason`] enum represents the thing that caused a draw to occur.
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum DrawReason {
     InsufficientMaterial,
     Stalemate,
@@ -24,6 +26,7 @@ pub enum DrawReason {
 
 /// The [`ChessGame`] struct represents a game of chess.
 #[derive(Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ChessGame {
     /// The game state.
     state: ChessBoard,

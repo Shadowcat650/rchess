@@ -2,6 +2,7 @@ use super::Color;
 
 /// The [`PieceType`] enum represents a type of chess piece.
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum PieceType {
     Pawn,
     Knight,
@@ -74,6 +75,7 @@ impl PieceType {
 
 /// The [`Piece`] struct represents a chess piece.
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Piece {
     pub kind: PieceType,
     pub color: Color,

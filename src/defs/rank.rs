@@ -15,6 +15,7 @@ pub const RANKS: [Rank; 8] = [
 /// The [`Rank`] enum represents a rank of the chessboard.
 #[repr(u8)]
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Rank {
     First,
     Second,

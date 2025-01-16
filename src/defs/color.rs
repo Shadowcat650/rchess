@@ -2,6 +2,7 @@ use std::ops::Not;
 
 /// The [`Color`] enum represents the color of a chess piece.
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Color {
     White,
     Black,

@@ -19,6 +19,7 @@ pub const SQUARES: [Square;64] = [
 /// Little-Endian Rank File mapping is used for square enumerations.
 #[repr(u8)]
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[rustfmt::skip]
 pub enum Square {
     A1, B1, C1, D1, E1, F1, G1, H1,

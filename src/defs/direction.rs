@@ -14,6 +14,7 @@ pub const DIRS: [Direction; 8] = [
 
 /// The [`Direction`] enum represents a direction on the chess board.
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Direction {
     Up,
     Down,

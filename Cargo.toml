@@ -14,6 +14,7 @@ build = "src/build.rs"
 [features]
 default = []
 magic-table = []
+serde = ["dep:serde"]
 
 [[bench]]
 name = "perfts"
@@ -35,11 +36,13 @@ opt-level = 3
 opt-level = 3
 
 [build-dependencies]
-lazy_static = "1.5.0"
 fastrand = "2.3.0"
+lazy_static = "1.5.0"
+serde = { version = "1.0.217", features = ["derive"], optional = true }
 
 [dev-dependencies]
 criterion = "0.5.1"
 
 [dependencies]
+serde = { version = "1.0.217", features = ["derive"], optional = true }
 thiserror = "2.0.11"

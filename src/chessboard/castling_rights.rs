@@ -2,6 +2,7 @@ use crate::{CastleSide, Color};
 
 /// The [`CastlingRights`] struct stores which sides and colors can castle
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CastlingRights(u8);
 
 impl CastlingRights {

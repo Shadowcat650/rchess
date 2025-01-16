@@ -13,6 +13,7 @@ use thiserror::Error;
 
 /// The [`Move`] enum represents a move on a chess board.
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Move {
     Quiet {
         start: Square,
@@ -51,6 +52,7 @@ pub enum Move {
 
 /// The [`BuilderConversionError`] enum is the error type for converting a [`BoardBuilder`] to a [`ChessBoard`].
 #[derive(Error, Debug, Copy, Clone, Eq, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum BuilderConversionError {
     #[error("the turn was not set")]
     TurnNotSet,
@@ -73,6 +75,7 @@ pub enum BuilderConversionError {
 
 /// The [`FenLoadError`] enum is the error type for loading a fen position.
 #[derive(Error, Debug, Copy, Clone, Eq, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum FenLoadError {
     #[error("there was an error with the fen formatting")]
     Formatting(#[from] FenFormatError),
@@ -86,6 +89,7 @@ pub enum FenLoadError {
 
 /// The [`FenFormatError`] enum is the error type for a fen's formatting.
 #[derive(Error, Debug, Copy, Clone, Eq, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum FenFormatError {
     #[error("the fen's piece section is invalid")]
     InvalidPieceSection,
@@ -117,6 +121,7 @@ pub enum FenFormatError {
 
 /// The [`Footprint`] struct is used to identify a [`ChessBoard`] without extra computed data.
 #[derive(Clone, Eq, PartialEq, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Footprint {
     piece_bbs: [BitBoard; 6],
     color_bbs: [BitBoard; 2],
@@ -134,6 +139,7 @@ impl Hash for Footprint {
 
 /// The [`ChessBoard`] struct represents a chess board.
 #[derive(Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ChessBoard {
     /// Where the pieces of a given piece type are on the chess board.
     piece_bbs: [BitBoard; 6],

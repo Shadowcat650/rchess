@@ -15,6 +15,7 @@ pub const FILES: [File; 8] = [
 /// The [`File`] enum represents a file of the chessboard.
 #[repr(u8)]
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum File {
     A,
     B,

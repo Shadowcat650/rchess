@@ -7,6 +7,7 @@ use thiserror::Error;
 
 /// The [`StrMoveCreationError`] enum is the error type produced when creating moves.
 #[derive(Error, Debug, Copy, Clone, Eq, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum StrMoveCreationError {
     #[error("the move was not formatted correctly")]
     InvalidMove,
@@ -17,6 +18,7 @@ pub enum StrMoveCreationError {
 
 /// The [`MoveCreationError`] struct signifies that there was an error while crating a move.
 #[derive(Error, Debug, Copy, Clone, Eq, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[error("the move was illegal")]
 pub struct MoveCreationError;
 

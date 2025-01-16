@@ -5,6 +5,7 @@ include!(concat!(env!("OUT_DIR"), "/zobrist.rs"));
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
 /// The [`ZobristHash`] is the hash of a [`ChessBoard`].
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ZobristHash(u64);
 
 impl ZobristHash {
