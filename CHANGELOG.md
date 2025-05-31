@@ -1,5 +1,7 @@
 # Changelog
 
+- Convert return result of `ChessGame::moves` & `ChessGame::made_moves` to `&[Move]`
+
 ### 2.3.0
 - Add `serde` feature 
 

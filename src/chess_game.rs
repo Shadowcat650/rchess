@@ -320,7 +320,7 @@ impl ChessGame {
 
     /// Gets a reference to all the moves made in the [`ChessGame`].
     #[inline]
-    pub fn made_moves(&self) -> &Vec<Move> {
+    pub fn made_moves(&self) -> &[Move] {
         &self.made_moves
     }
 
@@ -332,7 +332,7 @@ impl ChessGame {
 
     /// Gets a list of possible moves for the active color to make.
     #[inline]
-    pub fn moves(&self) -> &Vec<Move> {
+    pub fn moves(&self) -> &[Move] {
         &self.position_moves
     }
 }
