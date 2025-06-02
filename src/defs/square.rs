@@ -91,11 +91,8 @@ impl Square {
     /// Valid [`Square`] enum variants range 0 through 63.
     #[inline]
     pub const unsafe fn from_u8_unchecked(val: u8) -> Self {
-        match Self::from_u8(val) {
-            Some(square) => square,
-            // SAFETY: Caller upholds the safety contract.
-            None => unsafe { std::hint::unreachable_unchecked() },
-        }
+        // SAFETY: Caller upholds the safety contract.
+        unsafe { Self::from_u8(val).unwrap_unchecked() }
     }
 
     /// Creates a new [`Square`] from a [`&str`].
